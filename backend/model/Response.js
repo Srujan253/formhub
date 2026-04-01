@@ -17,9 +17,14 @@ const responseSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
-        value: mongoose.Schema.Types.Mixed, // Can be string, array, etc.
+        value: mongoose.Schema.Types.Mixed,
       },
     ],
+    respondentName: {
+      type: String,
+      default: 'Anonymous',
+      trim: true,
+    },
     respondentEmail: {
       type: String,
       default: 'anonymous',

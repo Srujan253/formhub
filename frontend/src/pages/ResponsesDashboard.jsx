@@ -107,18 +107,24 @@ const ResponsesDashboard = () => {
       return;
     }
 
-    const headers = ['Submitted At', ...form.questions.map((q) => q.title)];
+    const escapeCSV = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
+
+    const headers = ['Respondent Name', 'Date', 'Time', ...form.questions.map((q) => q.title)];
     const csvContent = [
-      headers.join(','),
+      headers.map(escapeCSV).join(','),
       ...responses.map((response) => {
-        const row = [new Date(response.createdAt).toLocaleString()];
+        const dt = new Date(response.createdAt);
+        const row = [
+          escapeCSV(response.respondentName || 'Anonymous'),
+          escapeCSV(dt.toLocaleDateString()),
+          escapeCSV(dt.toLocaleTimeString()),
+        ];
         form.questions.forEach((question) => {
           const answer = response.answers.find(
             (a) => a.questionId === question.id
           );
-          row.push(
-            answer?.value ? JSON.stringify(answer.value).replace(/"/g, '""') : ''
-          );
+          const val = answer?.value;
+          row.push(escapeCSV(Array.isArray(val) ? val.join(', ') : (val || '')));
         });
         return row.join(',');
       }),
@@ -377,12 +383,19 @@ const ResponsesDashboard = () => {
               className="card"
             >
               <div className="mb-4 pb-3 border-b border-gray-100/80 flex items-center justify-between">
-                <p className="text-xs text-gray-400 font-medium">
-                  Response #{index + 1}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {new Date(response.createdAt).toLocaleString()}
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {(response.respondentName || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {response.respondentName || 'Anonymous'}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Response #{index + 1} • {new Date(response.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-3">

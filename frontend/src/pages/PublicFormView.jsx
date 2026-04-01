@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Send, AlertCircle, Sparkles } from 'lucide-react';
+import { Send, AlertCircle, Sparkles, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
@@ -14,6 +14,7 @@ const PublicFormView = () => {
   const [success, setSuccess] = useState(false);
   const [answers, setAnswers] = useState({});
   const [errors, setErrors] = useState({});
+  const [respondentName, setRespondentName] = useState('');
 
   useEffect(() => {
     fetchForm();
@@ -67,6 +68,11 @@ const PublicFormView = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!respondentName.trim()) {
+      setError('Please enter your name before submitting');
+      return;
+    }
+
     if (!validateForm()) {
       setError('Please fill in all required fields');
       return;
@@ -83,10 +89,12 @@ const PublicFormView = () => {
       await responseAPI.submitPublicResponse({
         shareToken: token,
         answers: formattedAnswers,
+        respondentName: respondentName.trim(),
       });
 
       setSuccess(true);
       setAnswers({});
+      setRespondentName('');
       setError('');
     } catch (err) {
       setError('Failed to submit your response. Please try again.');
@@ -265,6 +273,32 @@ const PublicFormView = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+          {/* Respondent Name Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="card"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
+                <User size={14} className="text-primary-500" />
+              </div>
+              <label className="text-sm font-bold text-gray-900">
+                Your Name <span className="text-red-400">*</span>
+              </label>
+            </div>
+            <input
+              type="text"
+              value={respondentName}
+              onChange={(e) => { setRespondentName(e.target.value); if (error === 'Please enter your name before submitting') setError(''); }}
+              placeholder="Enter your full name"
+              className={`form-input ${
+                !respondentName.trim() && error ? 'border-red-300 ring-2 ring-red-100' : ''
+              }`}
+              required
+            />
+          </motion.div>
           {form.questions.map((question, index) => (
             <motion.div
               key={question.id}
