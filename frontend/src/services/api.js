@@ -58,4 +58,20 @@ export const emailAPI = {
   sendInvites: (data) => api.post('/email/invite', data),
 };
 
+// Cloudinary Upload API (Backend-routed)
+export const cloudinaryAPI = {
+  uploadImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  },
+};
+
 export default api;

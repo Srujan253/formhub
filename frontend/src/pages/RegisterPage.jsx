@@ -46,7 +46,7 @@ const RegisterPage = () => {
             <Sparkles size={24} className="text-white" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900">Create your account</h2>
-          <p className="text-gray-500 text-sm mt-1">Get started with FormHub today</p>
+          <p className="text-gray-500 text-sm mt-1">Get started with Pulse today</p>
         </motion.div>
 
         {/* Form card */}

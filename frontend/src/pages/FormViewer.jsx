@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, AlertCircle, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
@@ -195,9 +196,21 @@ const FormViewer = () => {
         transition={{ delay: 0.1 }}
         className="card mb-6 border-t-4 border-primary-500"
       >
+        {form.headerImage && (
+          <div className="w-full h-48 md:h-64 mb-6 rounded-2xl overflow-hidden shadow-glass border border-gray-100">
+            <img 
+              src={form.headerImage} 
+              alt="Form Header" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+        )}
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{form.title}</h1>
         {form.description && (
-          <p className="text-gray-500 text-base leading-relaxed">{form.description}</p>
+          <div 
+            className="prose prose-sm max-w-none text-gray-500 leading-relaxed mb-4 break-words"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
+          />
         )}
       </motion.div>
 

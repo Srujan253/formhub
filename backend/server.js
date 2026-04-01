@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import formRoutes from './routes/formRoutes.js';
 import responseRoutes from './routes/responseRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import { sendInvites } from './controllers/emailController.js';
 import { protect } from './middleware/authMiddleware.js';
 
@@ -67,6 +68,7 @@ connectDB();
 app.use('/api', formRoutes);
 app.use('/api', responseRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api', uploadRoutes); // Register /api/upload
 
 // Email route — defined directly to avoid Express 5 router import issues
 app.post('/api/email/invite', protect, sendInvites);

@@ -1,0 +1,488 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Plus, Save, AlertCircle, Share2, ArrowLeft } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formAPI, emailAPI } from '../services/api';
+import QuestionInput from '../components/QuestionInput';
+import InviteModal from '../components/InviteModal';
+import Toast from '../components/Toast';
+import ImageUpload from '../components/ImageUpload';
+import RichTextEditor from '../components/RichTextEditor';
+import MediaUpload from '../components/MediaUpload';
+import { useBeforeUnload } from 'react-use';
+
+const SaveStatus = ({ status }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: 20 }}
+    className="fixed top-20 right-8 z-50 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md rounded-xl border border-gray-100 shadow-glass"
+  >
+    {status === 'saving' ? (
+      <div className="w-4 h-4 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+    ) : (
+      <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    )}
+    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+      {status === 'saving' ? 'Saving...' : 'Saved'}
+    </span>
+  </motion.div>
+);
+
+const FormBuilder = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    headerImage: '',
+    questions: [],
+  });
+  const [loading, setLoading] = useState(!!id);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState(''); // 'saving' | 'saved' | ''
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [toast, setToast] = useState(null); // { message, type }
+
+  useEffect(() => {
+    if (id) {
+      fetchForm();
+    }
+  }, [id]);
+
+  // Debounced auto-save
+  useEffect(() => {
+    if (!id || !hasUnsavedChanges) return;
+
+    const timer = setTimeout(() => {
+      saveFormSilently();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [formData, hasUnsavedChanges, id]);
+
+  // BeforeUnload listener
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const fetchForm = async () => {
+    try {
+      const response = await formAPI.getForm(id);
+      setFormData(response.data.data);
+      setError('');
+    } catch (err) {
+      setError('Failed to load form');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      id: uuidv4(),
+      type: 'short_answer',
+      title: '',
+      description: '',
+      mediaUrl: '',
+      mediaType: '',
+      required: false,
+      options: [],
+    };
+    setFormData({
+      ...formData,
+      questions: [...formData.questions, newQuestion],
+    });
+  };
+
+  const handleQuestionChange = (index, updatedQuestion) => {
+    const updatedQuestions = [...formData.questions];
+    updatedQuestions[index] = updatedQuestion;
+    setFormData({ ...formData, questions: updatedQuestions });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleFormDataChange = (updates) => {
+    setFormData({ ...formData, ...updates });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDuplicateQuestion = (index) => {
+    const questionToDuplicate = formData.questions[index];
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: uuidv4(),
+    };
+    const updatedQuestions = [
+      ...formData.questions.slice(0, index + 1),
+      duplicatedQuestion,
+      ...formData.questions.slice(index + 1),
+    ];
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleDeleteQuestion = (index) => {
+    const updatedQuestions = formData.questions.filter((_, i) => i !== index);
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleSaveForm = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      if (!formData.title.trim()) {
+        setError('Form title is required');
+        return;
+      }
+
+      setSaving(true);
+      if (id) {
+        await formAPI.updateForm(id, formData);
+        setSuccess('Form updated successfully!');
+        setHasUnsavedChanges(false);
+      } else {
+        const response = await formAPI.createForm(formData);
+        setSuccess('Form created successfully!');
+        setHasUnsavedChanges(false);
+        setTimeout(() => {
+          navigate(`/edit/${response.data.data._id}`);
+        }, 1000);
+      }
+      setError('');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Failed to save form');
+      console.error('Save Form Axios Error:', err.response?.data || err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveFormSilently = async () => {
+    if (!id || !formData.title.trim()) return;
+    try {
+      setAutoSaveStatus('saving');
+      await formAPI.updateForm(id, formData);
+      setHasUnsavedChanges(false);
+      setAutoSaveStatus('saved');
+      setTimeout(() => setAutoSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Auto-save failed', err.response?.data || err.message);
+      setAutoSaveStatus('');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          className="inline-block"
+        >
+          <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
+        </motion.div>
+        <p className="text-gray-400 mt-4 text-sm font-medium">Loading form...</p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="max-w-3xl mx-auto px-4 py-8"
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-6">
+        <motion.button
+          whileHover={{ x: -2 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
+        >
+          <ArrowLeft size={16} />
+          Back to Forms
+        </motion.button>
+
+        {id && formData.shareToken && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-50/80 text-primary-700 rounded-xl
+                       text-sm font-medium hover:bg-primary-100/80 transition-all duration-300 border border-primary-100"
+          >
+            <Share2 size={16} />
+            Share
+          </motion.button>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <form onSubmit={handleSaveForm} className="card mb-6">
+        <h1 className="text-2xl font-bold mb-6 text-gray-900">
+          {id ? 'Edit Form' : 'Create New Form'}
+        </h1>
+
+        <div className="mb-5">
+          <label className="form-label">Form Title *</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) =>
+              handleFormDataChange({ title: e.target.value })
+            }
+            placeholder="e.g., Customer Feedback Survey"
+            className="form-input text-lg font-semibold"
+            required
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="form-label">Description</label>
+          <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+             <RichTextEditor
+               content={formData.description || ''}
+               onChange={(html) => handleFormDataChange({ ...formData, description: html })}
+               placeholder="Add a description (optional)"
+             />
+          </div>
+        </div>
+
+        <div className="mb-6 space-y-4">
+          <ImageUpload
+            label="Form Header Image"
+            value={formData.headerImage || ''}
+            onChange={(url) => {
+              handleFormDataChange({ headerImage: url });
+              setToast({ message: 'Image successfully updated! ✨', type: 'success' });
+              setTimeout(() => setToast(null), 3000);
+            }}
+          />
+          
+          <div className="mt-4">
+             <label className="form-label text-sm text-gray-500 mb-2 block">Optional Media Document (PDF/Image)</label>
+             <MediaUpload
+               mediaUrl={formData.mediaUrl || ''}
+               mediaType={formData.mediaType || ''}
+               onChange={({ mediaUrl, mediaType }) => {
+                 handleFormDataChange({ mediaUrl, mediaType });
+               }}
+             />
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={saving}
+            className="btn-primary flex items-center gap-2"
+          >
+            {saving ? (
+              <>
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Save Form
+              </>
+            )}
+          </motion.button>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+
+      <div>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-xl font-bold text-gray-900">Questions</h2>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleAddQuestion}
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            <Plus size={16} />
+            Add Question
+          </motion.button>
+        </div>
+
+        <AnimatePresence>
+          {formData.questions.map((question, index) => (
+            <QuestionInput
+              key={question.id}
+              question={question}
+              onChange={(updatedQuestion) =>
+                handleQuestionChange(index, updatedQuestion)
+              }
+              onDuplicate={() => handleDuplicateQuestion(index)}
+              onDelete={() => handleDeleteQuestion(index)}
+              onUploadSuccess={() => {
+                setToast({ message: 'Image successfully updated! ✨', type: 'success' });
+                setTimeout(() => setToast(null), 3000);
+              }}
+            />
+          ))}
+        </AnimatePresence>
+
+        {formData.questions.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 card"
+          >
+            <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Plus size={24} className="text-primary-400" />
+            </div>
+            <p className="text-gray-500 mb-4 text-sm">No questions yet. Start building your form.</p>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddQuestion}
+              className="btn-primary text-sm"
+            >
+              Add First Question
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
+
+      {formData.shareToken && (
+        <InviteModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          shareToken={formData.shareToken}
+          formTitle={formData.title}
+          formDescription={formData.description}
+          formId={id}
+          onSendInvites={(data) => emailAPI.sendInvites(data)}
+        />
+      )}
+
+      {/* Auto-save Status */}
+      <AnimatePresence>
+        {autoSaveStatus && <SaveStatus status={autoSaveStatus} />}
+      </AnimatePresence>
+
+      {/* Safety Modal for navigation within the app */}
+      <AnimatePresence>
+        {showSafetyModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSafetyModal(false)}
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-lumina-xl border border-gray-100"
+            >
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Unsaved Changes</h3>
+              <p className="text-gray-500 mb-6 text-sm leading-relaxed">
+                You have unsaved changes that will be lost if you leave. Would you like to save before exiting?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSafetyModal(false)}
+                  className="flex-1 btn-secondary text-sm"
+                >
+                  Stay
+                </button>
+                <button
+                  onClick={() => {
+                    setHasUnsavedChanges(false);
+                    navigate('/');
+                  }}
+                  className="flex-1 py-2.5 px-4 bg-red-50 text-red-600 rounded-xl font-semibold text-sm hover:bg-red-100 transition-colors"
+                >
+                  Leave
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Pinned Bottom Bar */}
+      <div className="fixed bottom-8 left-0 right-0 z-40 px-4 pointer-events-none">
+        <div className="max-w-3xl mx-auto flex justify-center">
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            className="flex gap-3 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass pointer-events-auto"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddQuestion}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl font-semibold text-sm shadow-md shadow-primary-500/25"
+            >
+              <Plus size={18} />
+              Add Question
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSaveForm}
+              disabled={saving || !hasUnsavedChanges}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md transition-all duration-300
+                ${saving || !hasUnsavedChanges
+                  ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 shadow-gray-200/20'
+                }`}
+            >
+              {saving ? (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+              ) : (
+                <Save size={18} />
+              )}
+              {saving ? 'Saving...' : hasUnsavedChanges ? 'Save Now' : 'All Saved'}
+            </motion.button>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default FormBuilder;

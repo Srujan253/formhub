@@ -31,7 +31,7 @@ const Navigation = () => {
               <Sparkles size={18} className="text-white" />
             </motion.div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
-              FormHub
+              Pulse
             </span>
           </Link>
 

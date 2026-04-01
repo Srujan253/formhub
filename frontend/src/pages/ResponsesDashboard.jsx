@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, AlertCircle, BarChart3, Users, HelpCircle, Calendar, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 
 // Simple horizontal bar chart component
@@ -101,6 +102,14 @@ const ResponsesDashboard = () => {
     }
   };
 
+  const allQuestions = useMemo(() => {
+    if (!form) return [];
+    if (form.sections) {
+      return form.sections.flatMap(s => s.items).filter(i => i.type !== 'layout_block');
+    }
+    return form.questions || [];
+  }, [form]);
+
   const downloadCSV = () => {
     if (responses.length === 0) {
       alert('No responses to download');
@@ -109,7 +118,10 @@ const ResponsesDashboard = () => {
 
     const escapeCSV = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
 
-    const headers = ['Respondent Name', 'Date', 'Time', ...form.questions.map((q) => q.title)];
+    const headers = ['Respondent Name', 'Date', 'Time', ...allQuestions.map((q) => {
+      const doc = new DOMParser().parseFromString(q.title, 'text/html');
+      return doc.body.textContent || q.title || "";
+    })];
     const csvContent = [
       headers.map(escapeCSV).join(','),
       ...responses.map((response) => {
@@ -119,7 +131,7 @@ const ResponsesDashboard = () => {
           escapeCSV(dt.toLocaleDateString()),
           escapeCSV(dt.toLocaleTimeString()),
         ];
-        form.questions.forEach((question) => {
+        allQuestions.forEach((question) => {
           const answer = response.answers.find(
             (a) => a.questionId === question.id
           );
@@ -139,11 +151,11 @@ const ResponsesDashboard = () => {
   };
 
   const chartableQuestions = useMemo(() => {
-    if (!form) return [];
-    return form.questions.filter((q) =>
+    if (!allQuestions.length) return [];
+    return allQuestions.filter((q) =>
       ['multiple_choice', 'checkboxes', 'dropdown'].includes(q.type)
     );
-  }, [form]);
+  }, [allQuestions]);
 
   if (loading) {
     return (
@@ -198,19 +210,33 @@ const ResponsesDashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="card mb-6"
+        className="card mb-6 border-t-4 border-primary-500"
       >
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{form.title}</h1>
-            <p className="text-gray-500 text-sm">{form.description}</p>
+        {form.headerImage && (
+          <div className="w-full h-32 md:h-48 mb-6 rounded-2xl overflow-hidden shadow-glass border border-gray-100">
+            <img 
+              src={form.headerImage} 
+              alt="Form Header" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 relative">
+          <div className="flex-1 min-w-0 pr-4">
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-1 break-words">{form.title}</h1>
+            {form.description && (
+              <div 
+                className="prose prose-sm max-w-none text-gray-500 mb-4 break-words"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
+              />
+            )}
           </div>
           {responses.length > 0 && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={downloadCSV}
-              className="btn-primary flex items-center gap-2 text-sm"
+              className="btn-primary shrink-0 flex items-center gap-2 text-sm z-10 sm:mt-0"
             >
               <Download size={16} />
               Export CSV
@@ -242,7 +268,7 @@ const ResponsesDashboard = () => {
               <HelpCircle size={14} className="text-emerald-500" />
               <p className="text-emerald-600 text-xs font-semibold uppercase tracking-wider">Questions</p>
             </div>
-            <p className="text-2xl font-extrabold text-emerald-900">{form.questions.length}</p>
+            <p className="text-2xl font-extrabold text-emerald-900">{allQuestions.length}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -330,7 +356,10 @@ const ResponsesDashboard = () => {
                         {question.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <h3 className="text-base font-bold text-gray-900">{question.title}</h3>
+                      <div 
+                        className="text-base font-bold text-gray-900 prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
+                      />
                   </div>
                   <OptionChart question={question} responses={responses} />
                 </motion.div>
@@ -339,7 +368,7 @@ const ResponsesDashboard = () => {
           )}
 
           {/* Text responses summary */}
-          {form.questions
+          {allQuestions
             .filter((q) => ['short_answer', 'paragraph'].includes(q.type))
             .map((question, index) => (
               <motion.div
@@ -399,7 +428,7 @@ const ResponsesDashboard = () => {
               </div>
 
               <div className="space-y-3">
-                {form.questions.map((question) => {
+                {allQuestions.map((question) => {
                   const answer = response.answers.find(
                     (a) => a.questionId === question.id
                   );

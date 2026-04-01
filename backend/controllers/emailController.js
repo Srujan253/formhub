@@ -23,8 +23,8 @@ export const sendInvites = async (req, res) => {
     }
 
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
-    const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@formhub.app';
-    const SENDER_NAME = process.env.SENDER_NAME || 'FormHub';
+    const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@pulse-forms.com';
+    const SENDER_NAME = process.env.SENDER_NAME || 'Pulse';
 
     if (!BREVO_API_KEY) {
       return res.status(500).json({ message: 'Email service not configured. Please set BREVO_API_KEY in .env' });
@@ -33,6 +33,7 @@ export const sendInvites = async (req, res) => {
     const formUrl = publicUrl || `${req.protocol}://${req.get('host')}/s/${form.shareToken}`;
     const title = formTitle || form.title;
     const description = formDescription || form.description || '';
+    const headerImage = form.headerImage || '';
 
     // Generate QR code URL using a free API for the email
     const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(formUrl)}&color=312e81&bgcolor=ffffff&format=png&margin=10`;
@@ -60,12 +61,12 @@ export const sendInvites = async (req, res) => {
                   
                   <!-- Header Banner -->
                   <tr>
-                    <td style="padding:36px 32px 24px;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:20px 20px 0 0;">
-                      <div style="width:52px;height:52px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-block;line-height:52px;margin-bottom:14px;">
+                    <td style="padding:36px 32px 24px;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:20px 20px 0 0;${headerImage ? `background-image:url(${headerImage});background-size:cover;background-position:center;` : ''}">
+                      <div style="width:52px;height:52px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-block;line-height:52px;margin-bottom:14px;backdrop-filter:blur(4px);">
                         <span style="font-size:24px;">✨</span>
                       </div>
-                      <h1 style="color:#ffffff;font-size:24px;font-weight:800;margin:0 0 4px;">FormHub</h1>
-                      <p style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:500;margin:0;">Survey Invitation</p>
+                      <h1 style="color:#ffffff;font-size:24px;font-weight:800;margin:0 0 4px;text-shadow:0 2px 4px rgba(0,0,0,0.3);">Pulse</h1>
+                      <p style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;margin:0;text-shadow:0 1px 2px rgba(0,0,0,0.3);">Survey Invitation</p>
                     </td>
                   </tr>
 
@@ -116,7 +117,7 @@ export const sendInvites = async (req, res) => {
                   <tr>
                     <td style="padding:20px 32px 28px;text-align:center;border-top:1px solid #f3f4f6;">
                       <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">
-                        Powered by <strong style="color:#6366f1;">FormHub</strong> • Modern Form Builder
+                        Powered by <strong style="color:#6366f1;">Pulse</strong> • Modern Form Builder
                       </p>
                       <p style="color:#d1d5db;font-size:10px;margin:0;">
                         This email was sent because someone invited you to participate in a survey.

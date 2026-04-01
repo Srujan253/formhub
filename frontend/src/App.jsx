@@ -10,6 +10,7 @@ import ResponsesDashboard from './pages/ResponsesDashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 const AppContent = () => {
@@ -24,12 +25,12 @@ const AppContent = () => {
           <Routes location={location} key={location.pathname}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/" element={<HomePage />} />
-            <Route path="/create" element={<FormBuilder />} />
-            <Route path="/edit/:id" element={<FormBuilder />} />
-            <Route path="/form/:id" element={<FormViewer />} />
+            <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/create" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
+            <Route path="/edit/:id" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
+            <Route path="/form/:id" element={<ProtectedRoute><FormViewer /></ProtectedRoute>} />
             <Route path="/s/:token" element={<PublicFormView />} />
-            <Route path="/responses/:formId" element={<ResponsesDashboard />} />
+            <Route path="/responses/:formId" element={<ProtectedRoute><ResponsesDashboard /></ProtectedRoute>} />
           </Routes>
         </AnimatePresence>
       </main>

@@ -45,7 +45,7 @@ const LoginPage = () => {
             <Sparkles size={24} className="text-white" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900">Welcome back</h2>
-          <p className="text-gray-500 text-sm mt-1">Sign in to continue to FormHub</p>
+          <p className="text-gray-500 text-sm mt-1">Sign in to continue to Pulse</p>
         </motion.div>
 
         {/* Form card */}

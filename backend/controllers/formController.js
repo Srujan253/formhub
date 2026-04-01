@@ -4,25 +4,27 @@ import crypto from 'crypto';
 // Create a new form
 export const createForm = async (req, res) => {
   try {
-    const { title, description, questions } = req.body;
+    const { title, description, headerImage, mediaUrl, mediaType, questions, sections } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Form title is required' });
     }
 
-    const newForm = new Form({
+    const newForm = await Form.create({
       title,
       description,
-      questions: questions || [],
+      headerImage,
+      mediaUrl,
+      mediaType,
+      sections: sections || (questions ? [{ id: 'default', items: questions }] : []),
       createdBy: req.user ? req.user._id : 'anonymous',
       shareToken: crypto.randomBytes(16).toString('hex'),
     });
 
-    await newForm.save();
     res.status(201).json({ success: true, data: newForm });
   } catch (error) {
     console.error('Create form error:', error);
-    res.status(500).json({ message: 'Error creating form', error: error.message });
+    res.status(500).json({ message: 'Error creating form', error: error.message, stack: error.stack });
   }
 };
 
@@ -72,12 +74,14 @@ export const getFormByToken = async (req, res) => {
 export const updateForm = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, questions, isActive } = req.body;
+    const { title, description, headerImage, mediaUrl, mediaType, sections, questions, isActive } = req.body;
+
+    const sectionsToUpdate = sections || (questions ? [{ id: 'default', title: 'Section 1', items: questions }] : undefined);
 
     const updatedForm = await Form.findByIdAndUpdate(
       id,
-      { title, description, questions, isActive },
-      { new: true, runValidators: true }
+      { title, description, headerImage, mediaUrl, mediaType, ...(sectionsToUpdate && { sections: sectionsToUpdate }), isActive },
+      { new: true }
     );
 
     if (!updatedForm) {
@@ -92,7 +96,8 @@ export const updateForm = async (req, res) => {
 
     res.status(200).json({ success: true, data: updatedForm });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating form', error: error.message });
+    console.error('Update form error:', error);
+    res.status(500).json({ message: 'Error updating form', error: error.message, stack: error.stack });
   }
 };
 

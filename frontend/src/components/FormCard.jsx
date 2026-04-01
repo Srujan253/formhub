@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BarChart3, Share2, Edit3, Calendar, HelpCircle, QrCode, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import QRPopup from './QRPopup';
 import InviteModal from './InviteModal';
 import { emailAPI, formAPI } from '../services/api';
@@ -16,6 +17,12 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
 
   const responsesUrl = `/responses/${form._id}`;
   const editUrl = `/edit/${form._id}`;
+
+  const questionCount = form.questions 
+    ? form.questions.length 
+    : (form.sections 
+        ? form.sections.flatMap(s => s.items).filter(i => i.type !== 'layout_block').length 
+        : 0);
 
   const handleSendInvites = async (data) => {
     await emailAPI.sendInvites(data);
@@ -76,6 +83,17 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
           )}
         </AnimatePresence>
 
+        {/* Banner image if present */}
+        {form.headerImage && (
+          <div className="h-24 w-full mb-4 -mt-2 rounded-xl overflow-hidden border border-gray-100/50 shadow-inner">
+            <img 
+              src={form.headerImage} 
+              alt={form.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-2">
@@ -85,16 +103,21 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
               {form.title}
             </h3>
           </div>
-          <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
-            {form.description || 'No description'}
-          </p>
+          {form.description ? (
+            <div 
+              className="text-gray-500 text-sm line-clamp-2 leading-relaxed prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
+            />
+          ) : (
+            <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">No description</p>
+          )}
         </div>
 
         {/* Meta */}
         <div className="flex items-center gap-4 mb-4 text-xs text-gray-400">
           <span className="flex items-center gap-1.5">
             <HelpCircle size={12} />
-            {form.questions.length} questions
+            {questionCount} questions
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar size={12} />

@@ -1,14 +1,50 @@
-import React from 'react';
-import { Trash2, Copy, GripVertical } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { 
+  Trash2, Copy, GripVertical, Type, AlignLeft,
+  Circle, CheckSquare, ChevronDown, Sliders,
+  Grid3X3, List, Upload, Layout, Image as ImageIcon, X,
+  ImagePlus, CircleDot, ChevronDownCircle, CloudUpload
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cloudinaryAPI } from '../services/api';
+import ImageUpload from './ImageUpload';
+import RichTextEditor from './RichTextEditor';
+import MediaUpload from './MediaUpload';
 
-const QuestionInput = ({ question, onChange, onDuplicate, onDelete }) => {
-  const handleTitleChange = (e) => {
-    onChange({ ...question, title: e.target.value });
+const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSuccess }) => {
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsTypeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleTitleChange = (html) => {
+    onChange({ ...question, title: html });
+  };
+  
+  const handleDescriptionChange = (html) => {
+    onChange({ ...question, description: html });
   };
 
-  const handleTypeChange = (e) => {
-    onChange({ ...question, type: e.target.value, options: [] });
+  const handleTypeChange = (newType) => {
+    let updates = { type: newType, options: [] };
+    
+    if (newType === 'linear_scale') {
+      updates = { ...updates, minScale: 1, maxScale: 5, minLabel: '', maxLabel: '' };
+    } else if (newType === 'grid_choice' || newType === 'grid_checkbox') {
+      updates = { ...updates, rows: ['Row 1'], columns: ['Column 1'] };
+    } else if (newType === 'image_section') {
+      updates = { ...updates, imageUrl: '' };
+    }
+    
+    onChange({ ...question, ...updates });
   };
 
   const handleRequiredChange = (e) => {
@@ -31,9 +67,23 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete }) => {
     onChange({ ...question, options: updatedOptions });
   };
 
-  const hasOptions = ['multiple_choice', 'checkboxes', 'dropdown'].includes(
-    question.type
-  );
+  const hasOptions = ['radio', 'checkboxes', 'dropdown'].includes(question.type);
+  const canHaveOther = ['radio', 'checkboxes'].includes(question.type);
+  const isLayoutBlock = question.type === 'layout_block';
+
+  const questionTypes = [
+    { value: 'short_answer', label: 'Short Answer', icon: <Type size={18} className="text-primary-500 mr-3" /> },
+    { value: 'paragraph', label: 'Paragraph', icon: <AlignLeft size={18} className="text-primary-500 mr-3" /> },
+    { value: 'radio', label: 'Radio buttons', icon: <CircleDot size={18} className="text-primary-500 mr-3" /> },
+    { value: 'checkboxes', label: 'Checkboxes', icon: <CheckSquare size={18} className="text-primary-500 mr-3" /> },
+    { value: 'dropdown', label: 'Dropdown', icon: <ChevronDownCircle size={18} className="text-primary-500 mr-3" /> },
+    { value: 'linear_scale', label: 'Linear Scale', icon: <Sliders size={18} className="text-primary-500 mr-3" /> },
+    { value: 'grid_choice', label: 'Multiple Choice Grid', icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
+    { value: 'grid_checkbox', label: 'Checkbox Grid', icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
+    { value: 'file_upload', label: 'File Upload', icon: <CloudUpload size={18} className="text-primary-500 mr-3" /> },
+  ];
+
+  const currentType = questionTypes.find(t => t.value === question.type) || questionTypes[0];
 
   return (
     <motion.div
@@ -42,31 +92,68 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="card mb-4 border-l-4 border-primary-500 group"
+      className={`card mb-4 border-l-4 group ${isLayoutBlock ? 'border-gray-400 bg-gray-50' : 'border-primary-500'}`}
     >
-      {/* Drag handle indicator */}
-      <div className="flex items-center justify-center mb-3 opacity-0 group-hover:opacity-40 transition-opacity">
+      <div className="flex items-center justify-center mb-3 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing">
         <GripVertical size={16} className="text-gray-400" />
       </div>
 
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <label className="form-label">Question Title</label>
-          <input
-            type="text"
-            value={question.title}
-            onChange={handleTitleChange}
-            placeholder="Enter question title"
-            className="form-input"
+          <label className="form-label">{isLayoutBlock ? (question.layoutType === 'image' ? 'Image Block Title' : 'Text Block Title') : 'Question Title'}</label>
+          <RichTextEditor
+             content={question.title || ''}
+             onChange={handleTitleChange}
+             placeholder={isLayoutBlock ? "Enter title here (optional)" : "Enter question here"}
           />
+          {isLayoutBlock && question.layoutType === 'title_desc' && (
+            <div className="mt-3 border rounded-xl overflow-hidden bg-white">
+              <label className="form-label px-3 py-2 text-xs text-gray-500 uppercase">Text Segment (Description)</label>
+              <RichTextEditor
+                content={question.description || ''}
+                onChange={handleDescriptionChange}
+                placeholder="Enter description here"
+              />
+            </div>
+          )}
+
+          {isLayoutBlock && question.layoutType === 'image' ? (
+             <div className="mt-4">
+               <ImageUpload value={question.imageUrl || question.mediaUrl} onChange={(url) => { onChange({ ...question, mediaUrl: url, mediaType: 'image' }); if(onUploadSuccess) onUploadSuccess(); }} label="Upload Main Image" />
+             </div>
+          ) : (
+            question.mediaUrl && !isLayoutBlock && (
+              <div className="mt-3">
+                <MediaUpload
+                  mediaUrl={question.mediaUrl}
+                  mediaType={question.mediaType}
+                  onChange={({ mediaUrl, mediaType }) => {
+                    onChange({ ...question, mediaUrl, mediaType });
+                    if (onUploadSuccess) onUploadSuccess();
+                  }}
+                />
+              </div>
+            )
+          )}
         </div>
         <div className="flex gap-2 ml-4">
+          {!question.mediaUrl && !isLayoutBlock && (
+            <MediaUpload
+              mediaUrl=""
+              mediaType=""
+              onChange={({ mediaUrl, mediaType }) => {
+                onChange({ ...question, mediaUrl, mediaType });
+                if (onUploadSuccess) onUploadSuccess();
+              }}
+              compact={true}
+            />
+          )}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onDuplicate}
             className="btn-secondary !px-3"
-            title="Duplicate question"
+            title="Duplicate"
           >
             <Copy size={16} />
           </motion.button>
@@ -75,50 +162,103 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete }) => {
             whileTap={{ scale: 0.95 }}
             onClick={onDelete}
             className="btn-danger !px-3"
-            title="Delete question"
+            title="Delete"
           >
             <Trash2 size={16} />
           </motion.button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="form-label">Question Type</label>
-          <select
-            value={question.type}
-            onChange={handleTypeChange}
-            className="form-input"
-          >
-            <option value="short_answer">Short Answer</option>
-            <option value="paragraph">Paragraph</option>
-            <option value="multiple_choice">Multiple Choice</option>
-            <option value="checkboxes">Checkboxes</option>
-            <option value="dropdown">Dropdown</option>
-          </select>
+      {!isLayoutBlock && (
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="relative" ref={dropdownRef}>
+            <label className="form-label">Question Type</label>
+            <button
+              onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+              className="w-full form-input flex items-center justify-between text-left h-[48px]"
+            >
+              <div className="flex items-center">
+                {currentType.icon}
+                <span className="font-medium text-gray-700">{currentType.label}</span>
+              </div>
+              <ChevronDown size={16} className={`text-gray-400 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {isTypeDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lumina-lg max-h-[300px] overflow-y-auto"
+                >
+                  <div className="py-2">
+                  {questionTypes.map((type) => (
+                    <button
+                      key={type.value}
+                      onClick={() => {
+                        handleTypeChange(type.value);
+                        setIsTypeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center px-4 py-2.5 transition-colors text-sm ${
+                        question.type === type.value ? 'bg-primary-50/50 font-semibold text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {type.icon}
+                      {type.label}
+                      {question.type === type.value && <CircleDot size={14} className="ml-auto text-primary-500" />}
+                    </button>
+                  ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <div className="flex items-end">
+            <label className="flex items-center cursor-pointer group/toggle">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={question.required}
+                  onChange={handleRequiredChange}
+                  className="sr-only"
+                />
+                <div className={`w-10 h-5 rounded-full transition-colors duration-300 ${
+                  question.required ? 'bg-primary-500' : 'bg-gray-300'
+                }`}></div>
+                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
+                  question.required ? 'translate-x-5' : ''
+                }`}></div>
+              </div>
+              <span className="ml-3 text-sm text-gray-700 font-medium">Required</span>
+            </label>
+          </div>
         </div>
-        <div className="flex items-end">
+      )}
+
+      {!isLayoutBlock && canHaveOther && (
+        <div className="mb-4">
           <label className="flex items-center cursor-pointer group/toggle">
             <div className="relative">
               <input
                 type="checkbox"
-                checked={question.required}
-                onChange={handleRequiredChange}
+                checked={question.allowOther}
+                onChange={(e) => onChange({ ...question, allowOther: e.target.checked })}
                 className="sr-only"
               />
-              <div className={`w-10 h-5 rounded-full transition-colors duration-300 ${
-                question.required ? 'bg-primary-500' : 'bg-gray-300'
+              <div className={`w-8 h-4 rounded-full transition-colors duration-300 ${
+                question.allowOther ? 'bg-primary-400' : 'bg-gray-200'
               }`}></div>
-              <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
-                question.required ? 'translate-x-5' : ''
+              <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
+                question.allowOther ? 'translate-x-4' : ''
               }`}></div>
             </div>
-            <span className="ml-3 text-sm text-gray-700 font-medium">Required</span>
+            <span className="ml-3 text-xs text-gray-600 font-medium">Add "Other" option</span>
           </label>
         </div>
-      </div>
+      )}
 
-      {hasOptions && (
+      {!isLayoutBlock && hasOptions && (
         <motion.div layout className="mb-4">
           <label className="form-label">Options</label>
           <div className="space-y-2">
@@ -163,6 +303,85 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete }) => {
             + Add Option
           </motion.button>
         </motion.div>
+      )}
+
+      {!isLayoutBlock && question.type === 'linear_scale' && (
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="form-label text-xs">Scale Range</label>
+            <div className="flex items-center gap-2">
+              <select
+                value={question.minScale}
+                onChange={(e) => onChange({ ...question, minScale: Number(e.target.value) })}
+                className="form-input text-xs"
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+              </select>
+              <span className="text-gray-400 text-xs">to</span>
+              <select
+                value={question.maxScale}
+                onChange={(e) => onChange({ ...question, maxScale: Number(e.target.value) })}
+                className="form-input text-xs"
+              >
+                {[2,3,4,5,6,7,8,9,10].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Label for min (optional)"
+              value={question.minLabel || ''}
+              onChange={(e) => onChange({ ...question, minLabel: e.target.value })}
+              className="form-input text-xs"
+            />
+            <input
+              type="text"
+              placeholder="Label for max (optional)"
+              value={question.maxLabel || ''}
+              onChange={(e) => onChange({ ...question, maxLabel: e.target.value })}
+              className="form-input text-xs"
+            />
+          </div>
+        </div>
+      )}
+
+      {!isLayoutBlock && question.type === 'file_upload' && (
+        <div className="mb-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 italic text-sm text-gray-500">
+          Respondents will be able to upload files to this question.
+        </div>
+      )}
+
+      {!isLayoutBlock && (question.type === 'grid_choice' || question.type === 'grid_checkbox') && (
+        <div className="space-y-4 mb-4">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="form-label text-xs flex justify-between">
+                Rows <span>(Questions)</span>
+              </label>
+              <textarea
+                className="form-input text-xs font-mono"
+                placeholder="One per line..."
+                rows="4"
+                value={question.rows?.join('\n') || ''}
+                onChange={(e) => onChange({ ...question, rows: e.target.value.split('\n') })}
+              />
+            </div>
+            <div>
+              <label className="form-label text-xs flex justify-between">
+                Columns <span>(Options)</span>
+              </label>
+              <textarea
+                className="form-input text-xs font-mono"
+                placeholder="One per line..."
+                rows="4"
+                value={question.columns?.join('\n') || ''}
+                onChange={(e) => onChange({ ...question, columns: e.target.value.split('\n') })}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </motion.div>
   );
