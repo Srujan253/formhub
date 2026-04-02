@@ -13,15 +13,17 @@ dotenv.config();
 
 const app = express();
 
-// CORS — allow all .onrender.com origins + localhost for dev
+// CORS — allow all .onrender.com origins + localhost for dev + vercel backup
 const allowedOriginPattern = /\.onrender\.com$/;
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, Postman, etc.)
     if (!origin) return callback(null, true);
+    
     if (
       allowedOriginPattern.test(new URL(origin).hostname) ||
-      origin.startsWith('http://localhost')
+      origin.startsWith('http://localhost') ||
+      origin === 'https://formhub-snowy.vercel.app'
     ) {
       return callback(null, true);
     }
