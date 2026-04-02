@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-
+  const { t } = useTranslation();
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -45,8 +46,8 @@ const LoginPage = () => {
           <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/25">
             <Sparkles size={24} className="text-white" />
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900">Welcome back</h2>
-          <p className="text-gray-500 text-sm mt-1">Sign in to continue to Pulse</p>
+          <h2 className="text-2xl font-extrabold text-gray-900">{t('auth.welcomeBack')}</h2>
+          <p className="text-gray-500 text-sm mt-1">{t('auth.login')}</p>
         </motion.div>
 
         {/* Form card */}
@@ -68,7 +69,7 @@ const LoginPage = () => {
             )}
 
             <div>
-              <label className="form-label">Email address</label>
+              <label className="form-label">{t('auth.email')}</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -84,7 +85,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label className="form-label">Password</label>
+              <label className="form-label">{t('auth.password')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -122,12 +123,12 @@ const LoginPage = () => {
               {loading ? (
                 <>
                   <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-                  Signing in...
+                  {t('auth.login')}...
                 </>
               ) : (
                 <>
                   <LogIn size={18} />
-                  Sign in
+                  {t('auth.login')}
                 </>
               )}
             </motion.button>
@@ -141,7 +142,7 @@ const LoginPage = () => {
           className="text-center mt-6"
         >
           <Link to="/register" className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
-            Don't have an account? <span className="underline">Register</span>
+            {t('auth.dontHave')}
           </Link>
         </motion.div>
       </motion.div>
@@ -150,3 +151,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

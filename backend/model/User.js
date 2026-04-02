@@ -18,6 +18,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    about: {
+      type: String,
+      required: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

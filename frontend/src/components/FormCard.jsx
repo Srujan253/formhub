@@ -3,11 +3,13 @@ import { BarChart3, Share2, Edit3, Calendar, HelpCircle, QrCode, Trash2 } from '
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
+import { useTranslation } from 'react-i18next';
 import QRPopup from './QRPopup';
 import InviteModal from './InviteModal';
 import { emailAPI, formAPI } from '../services/api';
 
 const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
+  const { t } = useTranslation();
   const [showQRPopup, setShowQRPopup] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [isActive, setIsActive] = useState(form.isActive !== false);
@@ -109,7 +111,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
             />
           ) : (
-            <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">No description</p>
+            <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">{t('home.noDescription', { defaultValue: 'No description' })}</p>
           )}
         </div>
 
@@ -117,7 +119,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
         <div className="flex items-center gap-4 mb-4 text-xs text-gray-400">
           <span className="flex items-center gap-1.5">
             <HelpCircle size={12} />
-            {questionCount} questions
+            {questionCount} {t('home.questions')}
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar size={12} />
@@ -149,7 +151,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
             <span className={`text-xs font-semibold transition-colors ${
               isActive ? 'text-emerald-600' : 'text-gray-400'
             }`}>
-              {toggling ? '...' : isActive ? 'Active' : 'Paused'}
+              {toggling ? '...' : isActive ? t('home.active') : t('home.inactive')}
             </span>
           </motion.button>
 
@@ -188,7 +190,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                        rounded-xl text-sm font-medium hover:bg-primary-100/80 transition-all duration-300"
           >
             <Edit3 size={14} />
-            Edit
+            {t('home.edit')}
           </Link>
           <button
             onClick={(e) => { e.stopPropagation(); setShowQRPopup(true); }}
@@ -196,7 +198,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                        rounded-xl text-sm font-medium hover:bg-gray-100/80 transition-all duration-300 border border-gray-100"
           >
             <QrCode size={14} />
-            QR Code
+            {t('home.qrCode')}
           </button>
           <Link
             to={responsesUrl}
@@ -204,7 +206,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                        rounded-xl text-sm font-medium hover:bg-emerald-100/80 transition-all duration-300"
           >
             <BarChart3 size={14} />
-            Results
+            {t('home.results')}
           </Link>
         </div>
 
@@ -228,8 +230,8 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                 <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Trash2 size={20} className="text-red-500" />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Delete this form?</p>
-                <p className="text-xs text-gray-500 mb-5">This action cannot be undone</p>
+                <p className="text-sm font-bold text-gray-900 mb-1">{t('formBuilder.deleteConfirmTitle', { defaultValue: 'Delete this form?' })}</p>
+                <p className="text-xs text-gray-500 mb-5">{t('formBuilder.deleteConfirmDesc', { defaultValue: 'This action cannot be undone' })}</p>
                 <div className="flex gap-2">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -237,7 +239,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                     onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }}
                     className="btn-secondary text-xs px-4 py-2"
                   >
-                    Cancel
+                    {t('system.cancel', { defaultValue: 'Cancel' })}
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -249,12 +251,12 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                     {deleting ? (
                       <>
                         <div className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-                        Deleting...
+                        {t('system.deleting', { defaultValue: 'Deleting...' })}
                       </>
                     ) : (
                       <>
                         <Trash2 size={12} />
-                        Delete
+                        {t('system.delete', { defaultValue: 'Delete' })}
                       </>
                     )}
                   </motion.button>

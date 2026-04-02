@@ -9,10 +9,10 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, about } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+    if (!name || !email || !password || !about) {
+      return res.status(400).json({ message: 'Name, email, password, and about section are required' });
     }
 
     const userExists = await User.findOne({ email });
@@ -20,13 +20,26 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({ name, email, password });
+    // First user created becomes admin and verified automatically
+    const isFirstUser = (await User.countDocuments({})) === 0;
+    
+    const user = await User.create({ 
+      name, 
+      email, 
+      password, 
+      about,
+      isVerified: isFirstUser,
+      isAdmin: isFirstUser 
+    });
 
     if (user) {
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
+        isVerified: user.isVerified,
+        isAdmin: user.isAdmin,
+        about: user.about,
         token: generateToken(user._id),
       });
     } else {
@@ -57,6 +70,9 @@ export const loginUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        isVerified: user.isVerified,
+        isAdmin: user.isAdmin,
+        about: user.about,
         token: generateToken(user._id),
       });
     } else {

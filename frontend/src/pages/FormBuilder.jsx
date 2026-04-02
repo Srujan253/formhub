@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +14,7 @@ import RichTextEditor from '../components/RichTextEditor';
 import MediaUpload from '../components/MediaUpload';
 import { useBeforeUnload } from 'react-use';
 
-const SaveStatus = ({ status }) => (
+const SaveStatus = ({ status, t }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
@@ -30,7 +31,7 @@ const SaveStatus = ({ status }) => (
       </div>
     )}
     <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-      {status === 'saving' ? 'Saving...' : 'Saved'}
+      {status === 'saving' ? t('formBuilder.saving') : t('formBuilder.allSaved')}
     </span>
   </motion.div>
 );
@@ -51,6 +52,7 @@ const PaletteTool = ({ icon: Icon, label, onClick }) => (
 );
 
 const FormBuilder = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -328,31 +330,31 @@ const FormBuilder = () => {
                 navigate('/');
               }
             }} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium">
-            <ArrowLeft size={16} /> Back to Forms
-          </motion.button>
+            <ArrowLeft size={16} />{t('formBuilder.backToForms')}</motion.button>
           {id && formData.shareToken && (
             <motion.button onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary-50/80 text-primary-700 rounded-xl text-sm font-medium hover:bg-primary-100/80 border border-primary-100">
-              <Share2 size={16} /> Share
+              <Share2 size={16} /> {t('formBuilder.share', { defaultValue: 'Share' })}
             </motion.button>
           )}
         </div>
 
         <AnimatePresence>{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</AnimatePresence>
 
-        <form onSubmit={handleSaveForm} className="card mb-6">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900">{id ? 'Edit Form' : 'Create New Form'}</h1>
-          <div className="mb-5">
-            <label className="form-label">Form Title *</label>
-            <input type="text" value={formData.title} onChange={(e) => handleFormDataChange({ title: e.target.value })} placeholder="e.g., Customer Feedback Survey" className="form-input text-lg font-semibold" required />
+        <div className="pb-32">
+          <form onSubmit={handleSaveForm} className="card mb-6">
+              <h1 className="text-2xl font-bold mb-6 text-gray-900">{id ? t('formBuilder.edit') : t('formBuilder.createNewForm')}</h1>
+            <div className="mb-5">
+            <label className="form-label">{t('formBuilder.formTitle')}</label>
+            <input type="text" value={formData.title} onChange={(e) => handleFormDataChange({ title: e.target.value })} placeholder={t('formBuilder.formTitlePlaceholder')} className="form-input text-lg font-semibold" required />
           </div>
           <div className="mb-6">
-            <label className="form-label">Description</label>
+            <label className="form-label">{t('formBuilder.descriptionLabel')}</label>
             <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
-               <RichTextEditor content={formData.description || ''} onChange={(html) => handleFormDataChange({ ...formData, description: html })} placeholder="Add a description (optional)" />
+               <RichTextEditor content={formData.description || ''} onChange={(html) => handleFormDataChange({ ...formData, description: html })} placeholder={t('formBuilder.descriptionPlaceholder')} />
             </div>
           </div>
           <div className="mb-6 space-y-4">
-            <ImageUpload label="Form Header Image" value={formData.headerImage || ''} onChange={(url) => { handleFormDataChange({ headerImage: url }); setToast({ message: 'Image successfully updated! ✨', type: 'success' }); setTimeout(() => setToast(null), 3000); }} />
+            <ImageUpload label={t('formBuilder.formHeaderImage')} value={formData.headerImage || ''} onChange={(url) => { handleFormDataChange({ headerImage: url }); setToast({ message: t('system.saved'), type: 'success' }); setTimeout(() => setToast(null), 3000); }} />
           </div>
         </form>
 
@@ -370,7 +372,7 @@ const FormBuilder = () => {
                           e.target.style.height = `${e.target.scrollHeight}px`;
                           handleSectionChange(sIndex, { title: e.target.value });
                         }}
-                        placeholder="Section Title"
+                        placeholder={t('formBuilder.sectionTitle', { defaultValue: 'Section Title' })}
                         className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
                         rows="1"
                       />
@@ -381,13 +383,13 @@ const FormBuilder = () => {
                           e.target.style.height = `${e.target.scrollHeight}px`;
                           handleSectionChange(sIndex, { description: e.target.value });
                         }}
-                        placeholder="Description (optional)"
+                        placeholder={t('formBuilder.description', { defaultValue: 'Description (optional)' })}
                         className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
                         rows="1"
                       />
                     </div>
                     {formData.sections.length > 1 && (
-                       <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Delete section">
+                       <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
                          <Trash2 size={18} />
                        </button>
                     )}
@@ -425,25 +427,25 @@ const FormBuilder = () => {
             </div>
           ))}
         </DragDropContext>
-
+        </div>
       </div>
 
       {/* Floating Palette aligned right of active section loosely */}
       <div className="fixed top-1/2 -translate-y-1/2 right-[max(20px,calc(50vw-450px))] flex flex-col gap-2 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass z-50">
-        <PaletteTool icon={Plus} label="Add Question" onClick={() => handleAddItem(activeSection, 'question')} />
+        <PaletteTool icon={Plus} label={t('formBuilder.addQuestion')} onClick={() => handleAddItem(activeSection, 'question')} />
         <div className="w-6 h-[1px] bg-gray-200 mx-auto my-1" />
-        <PaletteTool icon={Type} label="Add Title/Desc Block" onClick={() => handleAddItem(activeSection, 'layout_block', 'title_desc')} />
-        <PaletteTool icon={ImageIcon} label="Add Image Block" onClick={() => handleAddItem(activeSection, 'layout_block', 'image')} />
+        <PaletteTool icon={Type} label={t('formBuilder.addTitleDesc')} onClick={() => handleAddItem(activeSection, 'layout_block', 'title_desc')} />
+        <PaletteTool icon={ImageIcon} label={t('formBuilder.addImageBlock', { defaultValue: 'Add Image' })} onClick={() => handleAddItem(activeSection, 'layout_block', 'image')} />
         <div className="w-6 h-[1px] bg-gray-200 mx-auto my-1" />
-        <PaletteTool icon={LayoutList} label="Add Section" onClick={handleAddSection} />
+        <PaletteTool icon={LayoutList} label={t('formBuilder.sectionBreak')} onClick={handleAddSection} />
       </div>
 
       <div className="fixed bottom-8 left-0 right-0 z-40 px-4 pointer-events-none">
-        <div className="max-w-3xl mx-auto flex justify-center">
+        <div className="max-w-3xl mx-auto flex justify-center pb-8">
           <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="flex gap-3 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass pointer-events-auto">
             <motion.button onClick={handleSaveForm} disabled={saving || !hasUnsavedChanges} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md transition-all duration-300 ${saving || !hasUnsavedChanges ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 shadow-gray-200/20'}`}>
               {saving ? <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> : <Save size={18} />}
-              {saving ? 'Saving...' : hasUnsavedChanges ? 'Save Now' : 'All Saved'}
+              {saving ? t('formBuilder.saving') : hasUnsavedChanges ? t('formBuilder.saveNow') : t('formBuilder.allSaved')}
             </motion.button>
           </motion.div>
         </div>
@@ -452,3 +454,5 @@ const FormBuilder = () => {
   );
 };
 export default FormBuilder;
+
+

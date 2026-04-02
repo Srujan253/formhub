@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { UserPlus, Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,8 +48,8 @@ const RegisterPage = () => {
           <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/25">
             <Sparkles size={24} className="text-white" />
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900">Create your account</h2>
-          <p className="text-gray-500 text-sm mt-1">Get started with Pulse today</p>
+          <h2 className="text-2xl font-extrabold text-gray-900">{t('auth.createAccount')}</h2>
+          <p className="text-gray-500 text-sm mt-1">{t('auth.register')}</p>
         </motion.div>
 
         {/* Form card */}
@@ -69,7 +71,7 @@ const RegisterPage = () => {
             )}
 
             <div>
-              <label className="form-label">Full Name</label>
+              <label className="form-label">{t('auth.name')}</label>
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -85,7 +87,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label className="form-label">Email address</label>
+              <label className="form-label">{t('auth.email')}</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -101,7 +103,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label className="form-label">Password</label>
+              <label className="form-label">{t('auth.password')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -139,12 +141,12 @@ const RegisterPage = () => {
               {loading ? (
                 <>
                   <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-                  Creating account...
+                  {t('auth.register')}...
                 </>
               ) : (
                 <>
                   <UserPlus size={18} />
-                  Sign up
+                  {t('auth.register')}
                 </>
               )}
             </motion.button>
@@ -158,7 +160,7 @@ const RegisterPage = () => {
           className="text-center mt-6"
         >
           <Link to="/login" className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
-            Already have an account? <span className="underline">Sign in</span>
+            {t('auth.alreadyHave')}
           </Link>
         </motion.div>
       </motion.div>

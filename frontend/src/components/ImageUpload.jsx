@@ -1,16 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CloudUpload, ImagePlus, Loader2, CheckCircle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cloudinaryAPI } from '../services/api';
 
-const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
+const ImageUpload = ({ value, onChange, label }) => {
+  const { t } = useTranslation();
+  const defaultLabel = label || t('formBuilder.uploadImage', { defaultValue: 'Upload Image' });
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFile = async (file) => {
     if (!file || !file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
+      alert(t('formBuilder.uploadError', { defaultValue: 'Please select a valid image file.' }));
       return;
     }
 
@@ -35,7 +38,7 @@ const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
 
   return (
     <div className="space-y-3">
-      {label && <label className="form-label text-xs uppercase tracking-widest">{label}</label>}
+      {defaultLabel && <label className="form-label text-xs uppercase tracking-widest">{defaultLabel}</label>}
       
       {!value ? (
         <motion.div
@@ -70,7 +73,7 @@ const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
                 />
                 <Loader2 className="w-10 h-10 text-primary-600 animate-spin relative z-10" />
               </div>
-              <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Uploading...</span>
+              <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('system.uploading', { defaultValue: 'Uploading...' })}</span>
             </div>
           ) : (
             <>
@@ -78,8 +81,8 @@ const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
                 ${isDragging ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-primary-50 group-hover:text-primary-500'}`}>
                 <CloudUpload size={24} />
               </div>
-              <p className="text-sm font-bold text-gray-700 tracking-tight">Drop file or Click to upload</p>
-              <p className="text-xs text-gray-400 mt-1 font-medium">PNG, JPG or WebP (max. 10MB)</p>
+              <p className="text-sm font-bold text-gray-700 tracking-tight">{t('formBuilder.dropFile', { defaultValue: 'Drop file or Click to upload' })}</p>
+              <p className="text-xs text-gray-400 mt-1 font-medium">PNG, JPG or WebP {t('formBuilder.maxSize', { defaultValue: '(max. 10MB)' })}</p>
             </>
           )}
         </motion.div>
@@ -94,7 +97,7 @@ const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
               className="p-3 bg-white text-gray-900 rounded-xl font-bold text-xs flex items-center gap-2 shadow-xl hover:bg-primary-50"
             >
               <ImagePlus size={16} />
-              CHANGE IMAGE
+              {t('formBuilder.changeImage', { defaultValue: 'CHANGE IMAGE' })}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -103,7 +106,7 @@ const ImageUpload = ({ value, onChange, label = "Upload Image" }) => {
               className="p-3 bg-red-500 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-xl hover:bg-red-600"
             >
               <X size={16} />
-              REMOVE
+              {t('formBuilder.removeImage', { defaultValue: 'REMOVE' })}
             </motion.button>
           </div>
           <input

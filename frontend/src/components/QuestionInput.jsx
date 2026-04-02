@@ -7,11 +7,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cloudinaryAPI } from '../services/api';
+import { useTranslation } from 'react-i18next';
 import ImageUpload from './ImageUpload';
 import RichTextEditor from './RichTextEditor';
 import MediaUpload from './MediaUpload';
 
 const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSuccess }) => {
+  const { t } = useTranslation();
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -100,19 +102,19 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
 
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <label className="form-label">{isLayoutBlock ? (question.layoutType === 'image' ? 'Image Block Title' : 'Text Block Title') : 'Question Title'}</label>
+          <label className="form-label">{isLayoutBlock ? (question.layoutType === 'image' ? t('formBuilder.imageBlockTitle', { defaultValue: 'Image Block Title' }) : t('formBuilder.textBlockTitle', { defaultValue: 'Text Block Title' })) : t('formBuilder.questionTitle')}</label>
           <RichTextEditor
              content={question.title || ''}
              onChange={handleTitleChange}
-             placeholder={isLayoutBlock ? "Enter title here (optional)" : "Enter question here"}
+             placeholder={isLayoutBlock ? t('formBuilder.enterTitleHint', { defaultValue: 'Enter title here (optional)' }) : t('formBuilder.enterQuestionHint', { defaultValue: 'Enter question here' })}
           />
           {isLayoutBlock && question.layoutType === 'title_desc' && (
             <div className="mt-3 border rounded-xl overflow-hidden bg-white">
-              <label className="form-label px-3 py-2 text-xs text-gray-500 uppercase">Text Segment (Description)</label>
+              <label className="form-label px-3 py-2 text-xs text-gray-500 uppercase">{t('formBuilder.textSegment', { defaultValue: 'Text Segment (Description)' })}</label>
               <RichTextEditor
                 content={question.description || ''}
                 onChange={handleDescriptionChange}
-                placeholder="Enter description here"
+                placeholder={t('formBuilder.enterDescriptionHint', { defaultValue: 'Enter description here' })}
               />
             </div>
           )}
@@ -172,14 +174,14 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
       {!isLayoutBlock && (
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="relative" ref={dropdownRef}>
-            <label className="form-label">Question Type</label>
+            <label className="form-label">{t('formBuilder.questionType', { defaultValue: 'Question Type' })}</label>
             <button
               onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
               className="w-full form-input flex items-center justify-between text-left h-[48px]"
             >
               <div className="flex items-center">
                 {currentType.icon}
-                <span className="font-medium text-gray-700">{currentType.label}</span>
+                <span className="font-medium text-gray-700">{t(`formBuilder.types.${currentType.value}`, { defaultValue: currentType.label })}</span>
               </div>
               <ChevronDown size={16} className={`text-gray-400 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -205,7 +207,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                       }`}
                     >
                       {type.icon}
-                      {type.label}
+                      <span className="ml-2">{t(`formBuilder.types.${type.value}`, { defaultValue: type.label })}</span>
                       {question.type === type.value && <CircleDot size={14} className="ml-auto text-primary-500" />}
                     </button>
                   ))}
@@ -230,7 +232,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                   question.required ? 'translate-x-5' : ''
                 }`}></div>
               </div>
-              <span className="ml-3 text-sm text-gray-700 font-medium">Required</span>
+              <span className="ml-3 text-sm text-gray-700 font-medium">{t('formBuilder.required', { defaultValue: 'Required' })}</span>
             </label>
           </div>
         </div>
@@ -253,7 +255,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                 question.allowOther ? 'translate-x-4' : ''
               }`}></div>
             </div>
-            <span className="ml-3 text-xs text-gray-600 font-medium">Add "Other" option</span>
+            <span className="ml-3 text-sm text-gray-600">{t('formBuilder.addOther', { defaultValue: 'Add "Other" option' })}</span>
           </label>
         </div>
       )}

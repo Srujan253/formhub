@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
@@ -7,6 +8,7 @@ import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
 const PublicFormView = () => {
+  const { t } = useTranslation();
   const { token } = useParams();
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -186,8 +188,8 @@ const PublicFormView = () => {
           <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-emerald-500/30">
              <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Thank You!</h2>
-          <p className="text-gray-500 text-sm mb-6">Your response has been successfully submitted.</p>
+          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('public.thankYou')}</h2>
+          <p className="text-gray-500 text-sm mb-6">{t('public.success')}</p>
           <button onClick={() => { setSuccess(false); setAnswers({}); }} className="btn-secondary text-sm">Submit Another</button>
         </motion.div>
       </div>
@@ -316,7 +318,7 @@ const PublicFormView = () => {
                  {submitting ? (
                    <>
                      <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-                     Submitting...
+                     {t('public.submitting')}
                    </>
                  ) : (
                    <>

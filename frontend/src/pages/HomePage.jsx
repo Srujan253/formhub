@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Plus, AlertCircle, FileText, Sparkles, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formAPI } from '../services/api';
@@ -7,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import FormCard from '../components/FormCard';
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,7 +34,7 @@ const HomePage = () => {
         navigate('/login');
         return;
       }
-      setError('Failed to load forms. Please try again.');
+      setError(t('home.loadError'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -60,13 +62,13 @@ const HomePage = () => {
         >
           <div className="flex items-center gap-2 mb-2">
             <Sparkles size={16} className="text-primary-500" />
-            <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">Dashboard</span>
+            <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">{t('home.dashboard')}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            My <span className="bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">Forms</span>
+            {t('home.my')} <span className="bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">{t('home.forms')}</span>
           </h1>
           <p className="text-gray-500 text-lg max-w-xl">
-            Create, share, and analyze forms with ease. Get beautiful insights in real time.
+            {t('home.heroDesc')}
           </p>
         </motion.div>
 
@@ -83,13 +85,13 @@ const HomePage = () => {
             className="btn-primary flex items-center gap-2"
           >
             <Plus size={18} />
-            Create New Form
+            {t('home.createNewForm')}
           </motion.button>
 
           {forms.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-white/60 rounded-xl border border-gray-100 backdrop-blur-sm">
               <TrendingUp size={16} className="text-emerald-500" />
-              <span className="text-sm text-gray-600 font-medium">{forms.length} form{forms.length !== 1 ? 's' : ''}</span>
+              <span className="text-sm text-gray-600 font-medium">{forms.length} {t('home.forms')}</span>
             </div>
           )}
         </motion.div>
@@ -115,7 +117,7 @@ const HomePage = () => {
           >
             <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
           </motion.div>
-          <p className="text-gray-400 mt-4 text-sm font-medium">Loading your forms...</p>
+          <p className="text-gray-400 mt-4 text-sm font-medium">{t('home.loading')}</p>
         </div>
       ) : forms.length === 0 ? (
         <motion.div
@@ -127,15 +129,15 @@ const HomePage = () => {
           <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <FileText size={28} className="text-primary-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No forms yet</h3>
-          <p className="text-gray-500 mb-6 text-sm">Create your first form to start collecting responses</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{t('home.noFormsYet')}</h3>
+          <p className="text-gray-500 mb-6 text-sm">{t('home.createFirstDesc')}</p>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleCreateForm}
             className="btn-primary"
           >
-            Create Your First Form
+            {t('home.createYourFirst')}
           </motion.button>
         </motion.div>
       ) : (
@@ -163,3 +165,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
