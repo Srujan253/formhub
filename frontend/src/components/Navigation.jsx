@@ -18,7 +18,7 @@ const Navigation = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="bg-white/70 backdrop-blur-xl border-b border-gray-100/80 sticky top-0 z-50 shadow-sm"
+      className="bg-white/70 backdrop-blur-xl border-b border-gray-100/80 sticky top-0 z-[60] shadow-sm"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">

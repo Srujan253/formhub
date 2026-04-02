@@ -91,7 +91,9 @@ const PublicFormView = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    
     if (validateSection(currentSectionIndex)) {
       setCurrentSectionIndex(prev => Math.min(prev + 1, form.sections.length - 1));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -101,21 +103,23 @@ const PublicFormView = () => {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     setCurrentSectionIndex(prev => Math.max(prev - 1, 0));
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setError('');
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
 
     const currentIsMultiSection = form.sections.length > 1;
     const currentIsLastSection = currentSectionIndex === form.sections.length - 1;
 
+    // Completely block submit if we are not on the last section!
     if (currentIsMultiSection && !currentIsLastSection) {
-      handleNext();
-      return;
+      handleNext(e);
+      return; 
     }
 
     if (!validateAll()) {
@@ -257,27 +261,6 @@ const PublicFormView = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-20">
-          {/* Respondent Name Card - Only on First Page */}
-          {isFirstSection && (
-            <div className="card mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
-                  <User size={14} className="text-primary-500" />
-                </div>
-                <label className="text-sm font-bold text-gray-900">
-                  Your Name <span className="text-gray-400 font-normal italic ml-1 text-[11px] uppercase tracking-wider">(Optional)</span>
-                </label>
-              </div>
-              <input
-                type="text"
-                value={respondentName}
-                onChange={(e) => setRespondentName(e.target.value)}
-                placeholder="Enter your full name or leave empty for anonymous response"
-                className="form-input"
-              />
-            </div>
-          )}
-
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSectionIndex}

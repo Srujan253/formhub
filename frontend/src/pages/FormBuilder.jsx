@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList } from 'lucide-react';
+import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -68,6 +68,7 @@ const FormBuilder = () => {
   const [success, setSuccess] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -87,6 +88,26 @@ const FormBuilder = () => {
   }, [formData, hasUnsavedChanges, id]);
 
   useBeforeUnload(hasUnsavedChanges, 'You have unsaved changes, are you sure you want to leave?');
+
+  // Intercept the system/browser back button
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    // Push a dummy state into history so the initial "Back" click just pops this off instead of leaving
+    window.history.pushState(null, '', window.location.pathname);
+
+    const handlePopState = (e) => {
+      // The user clicked the browser's back button
+      setShowExitConfirm(true);
+      // Keep the user trapped on the current page by pushing another dummy state immediately
+      window.history.pushState(null, '', window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
 
   const fetchForm = async () => {
     try {
@@ -156,9 +177,14 @@ const FormBuilder = () => {
 
   const handleDeleteSection = (sIndex) => {
     if (formData.sections.length <= 1) return;
+    if (!window.confirm("Are you sure you want to delete this section and all its questions?")) {
+      return;
+    }
     const sections = formData.sections.filter((_, i) => i !== sIndex);
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
+    setToast({ message: 'Section removed', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
     if (activeSection >= sections.length) {
       setActiveSection(Math.max(0, sections.length - 1));
     }
@@ -253,9 +279,55 @@ const FormBuilder = () => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto px-4 py-8 flex">
-      <div className="flex-1 pr-16 relative">
+      <div className="flex-1 pr-16 relative">          <AnimatePresence>
+            {showExitConfirm && (
+              <motion.div
+                initial={{ opacity: 0, y: -20, x: '-50%' }}
+                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, y: -20, x: '-50%' }}
+                className="fixed top-8 left-1/2 z-[200] flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md min-w-[320px] max-w-[90vw] bg-white border-red-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                    <AlertCircle size={18} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
+                    Close without saving? All changes will be lost.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowExitConfirm(false)}
+                    className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExitConfirm(false);
+                      setHasUnsavedChanges(false);
+                      // Since we pushed 2 back states (1 on initial change, 1 on intercept), we pop them before navigating gracefully
+                      window.history.go(-2);
+                      setTimeout(() => navigate('/'), 100);
+                    }}
+                    className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20 rounded-lg transition-colors"
+                  >
+                    Yes
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         <div className="flex items-center justify-between mb-6">
-          <motion.button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium">
+            <motion.button onClick={() => {
+              if (hasUnsavedChanges) {
+                setShowExitConfirm(true);
+              } else {
+                navigate('/');
+              }
+            }} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium">
             <ArrowLeft size={16} /> Back to Forms
           </motion.button>
           {id && formData.shareToken && (
@@ -286,21 +358,41 @@ const FormBuilder = () => {
 
         <DragDropContext onDragEnd={onDragEnd}>
           {formData.sections.map((section, sIndex) => (
-            <div key={section.id} className="mb-10 relative" onClick={() => setActiveSection(sIndex)}>
-              
-              <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 mr-4">
-                    <input type="text" value={section.title} onChange={(e) => handleSectionChange(sIndex, { title: e.target.value })} placeholder="Section Title" className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors" />
-                    <input type="text" value={section.description || ''} onChange={(e) => handleSectionChange(sIndex, { description: e.target.value })} placeholder="Description (optional)" className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors" />
+              <div key={section.id} className={`mb-10 relative ${activeSection === sIndex ? 'z-50' : 'z-10'}`} onClick={() => setActiveSection(sIndex)}>
+
+                <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 mr-4">
+                      <textarea
+                        value={section.title}
+                        onChange={(e) => {
+                          e.target.style.height = 'inherit';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                          handleSectionChange(sIndex, { title: e.target.value });
+                        }}
+                        placeholder="Section Title"
+                        className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
+                        rows="1"
+                      />
+                      <textarea
+                        value={section.description || ''}
+                        onChange={(e) => {
+                          e.target.style.height = 'inherit';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                          handleSectionChange(sIndex, { description: e.target.value });
+                        }}
+                        placeholder="Description (optional)"
+                        className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
+                        rows="1"
+                      />
+                    </div>
+                    {formData.sections.length > 1 && (
+                       <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Delete section">
+                         <Trash2 size={18} />
+                       </button>
+                    )}
                   </div>
-                  {formData.sections.length > 1 && (
-                     <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
-                       <AlertCircle size={18} />
-                     </button>
-                  )}
                 </div>
-              </div>
 
               <Droppable droppableId={sIndex.toString()}>
                 {(provided, snapshot) => (
