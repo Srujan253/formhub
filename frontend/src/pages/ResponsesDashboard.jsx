@@ -5,10 +5,156 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import { formatDistanceToNow, format } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, BarChart, Bar, LabelList } from 'recharts';
+
+const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
+const truncateText = (str, n) => (str && str.length > n ? str.substr(0, n - 1) + '…' : str);
 
 const QuestionSimpleVisual = ({ question, responses }) => {
   const [expanded, setExpanded] = useState(false);
+
+  const isRadio = question.type === 'radio';
+  const isCheckbox = question.type === 'checkboxes';
+
+  if (isRadio || isCheckbox) {
+    // TODO: map your response data shape here
+    const answeredResponses = responses.filter(r => {
+      const ans = r.answers?.find(a => a.questionId === question.id);
+      return ans && ans.value && (Array.isArray(ans.value) ? ans.value.length > 0 : String(ans.value).trim() !== '');
+    });
+    const totalRespondents = answeredResponses.length;
+
+    if (totalRespondents === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+          <TrendingUp size={32} className="mb-2 text-gray-300" />
+          <p className="text-sm">No responses yet</p>
+        </div>
+      );
+    }
+
+    const options = question.options?.map(o => o.text) || [];
+    const counts = {};
+    options.forEach(o => counts[o] = 0);
+
+    answeredResponses.forEach(r => {
+      const val = r.answers.find(a => a.questionId === question.id)?.value;
+      if (val) {
+        const vals = Array.isArray(val) ? val : [val];
+        vals.forEach(v => {
+          if (counts[v] !== undefined) counts[v]++;
+          else counts[v] = 1;
+        });
+      }
+    });
+
+    if (isRadio) {
+      const chartData = Object.entries(counts)
+        .map(([name, value]) => ({ name, value }))
+        .filter(d => options.includes(d.name) || d.value > 0);
+
+      return (
+        <div className="mt-4">
+          <div className="h-64 w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  dataKey="value"
+                  isAnimationActive={true}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={RADIO_COLORS[index % RADIO_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1f2937', color: '#fff', borderRadius: '8px', border: 'none' }}
+                  formatter={(value, name) => {
+                    const pct = totalRespondents > 0 ? Math.round((value / totalRespondents) * 100) : 0;
+                    return [`${value} (${pct}%)`, name];
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-gray-800">{totalRespondents}</span>
+              <span className="text-xs text-gray-400">responses</span>
+            </div>
+          </div>
+          
+          <motion.div 
+            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            initial="hidden" whileInView="show" viewport={{ once: true }}
+            className="flex flex-wrap justify-center gap-3 mt-6"
+          >
+            {chartData.map((entry, index) => {
+              const pct = totalRespondents > 0 ? Math.round((entry.value / totalRespondents) * 100) : 0;
+              return (
+                <motion.div variants={{ hidden: {opacity:0, y:5}, show: {opacity:1, y:0} }} key={index} className="flex items-center text-sm text-gray-700 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                  <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: RADIO_COLORS[index % RADIO_COLORS.length] }}></span>
+                  <span className="font-medium mr-2 truncate max-w-[150px]" title={entry.name}>{entry.name}</span>
+                  <span className="text-gray-400 font-semibold">{pct}%</span>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+          <div className="mt-8 text-xs text-gray-400 text-center font-medium">Based on {totalRespondents} {totalRespondents === 1 ? 'response' : 'responses'}</div>
+        </div>
+      );
+    } else {
+      // CHECKBOXES
+      const sortedData = Object.entries(counts)
+        .map(([name, value]) => ({ 
+          name: truncateText(name, 24), 
+          fullName: name, 
+          value 
+        }))
+        .filter(d => options.includes(d.fullName) || d.value > 0);
+
+      return (
+        <div className="mt-4">
+          <div className="w-full" style={{ height: `${Math.max(sortedData.length * 52 + 30, 150)}px` }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={sortedData} layout="vertical" margin={{ top: 0, right: 120, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                <XAxis type="number" hide domain={[0, 'dataMax']} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} width={130} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ backgroundColor: '#1f2937', color: '#fff', borderRadius: '8px', border: 'none' }}
+                  formatter={(val, name, props) => {
+                    const pct = totalRespondents > 0 ? Math.round((val / totalRespondents) * 100) : 0;
+                    return [`${val} (${pct}% of respondents)`, props.payload.fullName];
+                  }}
+                  labelFormatter={() => null}
+                />
+                <Bar dataKey="value" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={28} isAnimationActive={true} animationBegin={200} animationDuration={1000}>
+                  <LabelList 
+                    dataKey="value" 
+                    position="right" 
+                    content={(props) => {
+                      const { x, y, width, height, value } = props;
+                      return (
+                        <text x={x + width + 10} y={y + height / 2 + 4} fill="#64748b" fontSize={12} className="font-medium">
+                          {value} / {totalRespondents} respondents
+                        </text>
+                      );
+                    }} 
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-6 text-xs text-gray-400 text-center font-medium">Based on {totalRespondents} {totalRespondents === 1 ? 'response' : 'responses'}</div>
+        </div>
+      );
+    }
+  }
 
   const rawAnswers = useMemo(() => {
     return responses
@@ -388,29 +534,32 @@ const ResponsesDashboard = () => {
           </motion.div>
 
           {/* Question Renderers */}
-          {allQuestions.map((question, index) => (
+          {allQuestions.map((question, index) => {
+            const isVisualType = question.type === 'radio' || question.type === 'checkboxes';
+            
+            return (
             <motion.div
               key={question.id}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 * (index % 5) }}
-              className="card bg-white rounded-xl shadow-sm border border-gray-100"
+              className={`card bg-white rounded-2xl shadow-md p-6 border ${isVisualType ? 'border-t-[3px] border-t-indigo-500 border-x-gray-100/80 border-b-gray-100/80' : 'border-gray-100'}`}
             >
-              <div className="mb-5 flex items-start gap-3 border-b border-gray-50 pb-3">
-                <div className="bg-primary-50 text-primary-600 font-bold text-xs px-2 py-1 rounded-md shrink-0 mt-0.5">
+              <div className={`flex items-start gap-3 pb-3 ${isVisualType ? 'mb-4 border-b border-gray-50' : 'mb-5 border-b border-gray-50'}`}>
+                <div className={`${isVisualType ? 'bg-indigo-100 text-indigo-700' : 'bg-primary-50 text-primary-600'} font-bold text-xs px-3 py-1.5 rounded-full shrink-0 mt-0.5`}>
                   Q{index + 1}
                 </div>
                 <div className="flex-1">
                   <div 
-                    className="text-base font-bold text-gray-900 prose prose-sm max-w-none"
+                    className={`text-base prose prose-sm max-w-none ${isVisualType ? 'font-semibold text-gray-900' : 'font-bold text-gray-900'}`}
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
                   />
                 </div>
               </div>
               <QuestionSimpleVisual question={question} responses={responses} />
             </motion.div>
-          ))}
+          )})}
         </motion.div>
       ) : (
         /* Individual Responses (Paginated) */

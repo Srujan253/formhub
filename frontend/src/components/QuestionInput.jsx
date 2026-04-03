@@ -94,7 +94,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={`card mb-4 border-l-4 group ${isLayoutBlock ? 'border-gray-400 bg-gray-50' : 'border-primary-500'}`}
+      className={`card mb-4 border-l-4 group relative ${isTypeDropdownOpen ? 'z-50' : 'z-10'} ${isLayoutBlock ? 'border-gray-400 bg-gray-50' : 'border-primary-500'}`}
     >
       <div className="flex items-center justify-center mb-3 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing">
         <GripVertical size={16} className="text-gray-400" />
