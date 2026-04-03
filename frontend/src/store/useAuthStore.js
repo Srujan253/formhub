@@ -7,20 +7,20 @@ export const useAuthStore = create(
       user: null,
       token: null,
       isVerified: false,
-      isAdmin: false,
+      role: 'staff',
       pendingVerification: false,
       login: (userData, token) => set({
         user: userData,
         token,
         isVerified: userData.isVerified || false,
-        isAdmin: userData.isAdmin || false,
+        role: userData.role || 'staff',
         pendingVerification: userData.isVerified === false
       }),
       logout: () => set({
         user: null,
         token: null,
         isVerified: false,
-        isAdmin: false,
+        role: 'staff',
         pendingVerification: false
       }),
       updateVerificationStatus: (status) => set(state => ({

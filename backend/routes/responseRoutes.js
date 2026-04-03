@@ -5,13 +5,13 @@ import {
   getFormResponses,
   getResponseCount,
 } from '../controllers/responseController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Protected routes — require JWT
 router.post('/responses', protect, submitResponse);
-router.get('/responses/:formId', protect, getFormResponses);
+router.get('/responses/:formId', protect, authorize('admin', 'manager', 'staff'), getFormResponses);
 
 // Public routes — no auth
 router.post('/responses/public', submitPublicResponse);

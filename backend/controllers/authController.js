@@ -23,13 +23,15 @@ export const registerUser = async (req, res) => {
     // First user created becomes admin and verified automatically
     const isFirstUser = (await User.countDocuments({})) === 0;
     
+    const userRole = isFirstUser ? 'admin' : 'staff';
+
     const user = await User.create({ 
       name, 
       email, 
       password, 
       about,
       isVerified: isFirstUser,
-      isAdmin: isFirstUser 
+      role: userRole
     });
 
     if (user) {
@@ -38,7 +40,7 @@ export const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-        isAdmin: user.isAdmin,
+        role: user.role,
         about: user.about,
         token: generateToken(user._id),
       });
@@ -71,7 +73,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-        isAdmin: user.isAdmin,
+        role: user.role,
         about: user.about,
         token: generateToken(user._id),
       });

@@ -26,9 +26,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isAdmin: {
-      type: Boolean,
-      default: false,
+    role: {
+      type: String,
+      enum: ['admin', 'manager', 'staff'],
+      default: 'staff',
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
     },
   },
   { timestamps: true }

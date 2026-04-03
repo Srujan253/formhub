@@ -101,10 +101,17 @@ export const updateForm = async (req, res) => {
   }
 };
 
-// Get all forms for the authenticated user
+// Get all forms for the authenticated manager (or assigned forms if staff)
 export const getAllForms = async (req, res) => {
   try {
-    const forms = await Form.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
+    let query = {};
+    if (req.user.role === 'staff') {
+       query.createdBy = req.user.createdBy;
+    } else if (req.user.role === 'manager') {
+       query.createdBy = req.user._id;
+    }
+    
+    const forms = await Form.find(query).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: forms });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching forms', error: error.message });

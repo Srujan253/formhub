@@ -23,3 +23,18 @@ export const protect = async (req, res, next) => {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
+
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+    
+    // Super manager can do anything, or check if user role is in allowed roles
+    if (req.user.role === 'admin' || roles.includes(req.user.role)) {
+      next();
+    } else {
+      res.status(403).json({ message: 'Forbidden. You do not have permission.' });
+    }
+  };
+};

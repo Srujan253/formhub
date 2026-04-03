@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Sparkles, Eye, EyeOff, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,6 +10,7 @@ const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [about, setAbout] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ const RegisterPage = () => {
     try {
       setLoading(true);
       setError('');
-      await register(name, email, password);
+      await register(name, email, password, about);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register');
@@ -123,6 +124,22 @@ const RegisterPage = () => {
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label">{t('auth.about') || 'Tell us about yourself/your organization'}</label>
+              <div className="relative">
+                <Building2 size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <textarea
+                  name="about"
+                  required
+                  rows={3}
+                  className="form-input !pl-10 resize-none"
+                  placeholder="Tell us a little bit about yourself or your organization..."
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                />
               </div>
             </div>
 

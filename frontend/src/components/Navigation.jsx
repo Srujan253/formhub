@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, LogOut, LogIn, UserPlus, Sparkles, Languages, Check } from 'lucide-react';
+import { FileText, Plus, LogOut, LogIn, UserPlus, Sparkles, Languages, Check, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useConfigStore } from '../store/useConfigStore';
@@ -90,14 +90,22 @@ const Navigation = () => {
 
             {user ? (
               <>
+                {(user.role === 'admin' || user.role === 'manager') && (
+                    <Link to="/admin" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm !text-indigo-600 !bg-indigo-50 hover:!bg-indigo-100 !border-indigo-100">
+                    <ShieldAlert size={16} />
+                    <span className="hidden sm:inline">Settings</span>
+                  </Link>
+                )}
                 <Link to="/" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm">
                   <FileText size={16} />
                   <span className="hidden sm:inline">{t('header.myForms')}</span>
                 </Link>
-                <Link to="/create" className="flex items-center gap-2 btn-primary text-xs sm:text-sm">
-                  <Plus size={16} />
-                  <span className="hidden sm:inline">{t('header.create')}</span>
-                </Link>
+                {user.role !== 'staff' && (
+                  <Link to="/create" className="flex items-center gap-2 btn-primary text-xs sm:text-sm">
+                    <Plus size={16} />
+                    <span className="hidden sm:inline">{t('header.create')}</span>
+                  </Link>
+                )}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

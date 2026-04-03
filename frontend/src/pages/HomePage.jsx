@@ -5,6 +5,7 @@ import { Plus, AlertCircle, FileText, Sparkles, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { formAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../store/useAuthStore';
 import FormCard from '../components/FormCard';
 
 const HomePage = () => {
@@ -14,6 +15,9 @@ const HomePage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const currentRole = useAuthStore((state) => state.role);
+  const canCreate = currentRole !== 'staff';
 
   useEffect(() => {
     if (!user) {
@@ -78,15 +82,17 @@ const HomePage = () => {
           transition={{ delay: 0.2, duration: 0.4 }}
           className="flex gap-3 items-center"
         >
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleCreateForm}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus size={18} />
-            {t('home.createNewForm')}
-          </motion.button>
+          {canCreate && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateForm}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus size={18} />
+              {t('home.createNewForm')}
+            </motion.button>
+          )}
 
           {forms.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-white/60 rounded-xl border border-gray-100 backdrop-blur-sm">
@@ -131,14 +137,16 @@ const HomePage = () => {
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">{t('home.noFormsYet')}</h3>
           <p className="text-gray-500 mb-6 text-sm">{t('home.createFirstDesc')}</p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleCreateForm}
-            className="btn-primary"
-          >
-            {t('home.createYourFirst')}
-          </motion.button>
+          {canCreate && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateForm}
+              className="btn-primary"
+            >
+              {t('home.createYourFirst')}
+            </motion.button>
+          )}
         </motion.div>
       ) : (
         <motion.div

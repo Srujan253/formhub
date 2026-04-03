@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import QRPopup from './QRPopup';
 import InviteModal from './InviteModal';
 import { emailAPI, formAPI } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
   const { t } = useTranslation();
@@ -16,6 +17,9 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
   const [toggling, setToggling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  
+  const currentRole = useAuthStore((state) => state.role);
+  const canEditOrDelete = currentRole !== 'staff';
 
   const responsesUrl = `/responses/${form._id}`;
   const editUrl = `/edit/${form._id}`;
@@ -131,10 +135,10 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
         <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100/80">
           {/* Active/Inactive Toggle */}
           <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleToggleActive}
-            disabled={toggling}
-            className="flex items-center gap-2 cursor-pointer group/toggle"
+            whileTap={{ scale: canEditOrDelete ? 0.95 : 1 }}
+            onClick={canEditOrDelete ? handleToggleActive : (e) => e.stopPropagation()}
+            disabled={toggling || !canEditOrDelete}
+            className={`flex items-center gap-2 ${canEditOrDelete ? 'cursor-pointer group/toggle' : 'cursor-default'}`}
             title={isActive ? 'Deactivate form' : 'Activate form'}
           >
             <div className={`relative w-10 h-[22px] rounded-full transition-all duration-400 ease-in-out ${
@@ -170,28 +174,32 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
           </motion.button>
 
           {/* Delete button */}
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50/80 text-red-400
-                       hover:bg-red-100 hover:text-red-600 transition-all duration-300"
-            title="Delete form"
-          >
-            <Trash2 size={14} />
-          </motion.button>
+          {canEditOrDelete && (
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50/80 text-red-400
+                         hover:bg-red-100 hover:text-red-600 transition-all duration-300"
+              title="Delete form"
+            >
+              <Trash2 size={14} />
+            </motion.button>
+          )}
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2">
-          <Link
-            to={editUrl}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary-50/80 text-primary-700
-                       rounded-xl text-sm font-medium hover:bg-primary-100/80 transition-all duration-300"
-          >
-            <Edit3 size={14} />
-            {t('home.edit')}
-          </Link>
+          {canEditOrDelete && (
+            <Link
+              to={editUrl}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary-50/80 text-primary-700
+                         rounded-xl text-sm font-medium hover:bg-primary-100/80 transition-all duration-300"
+            >
+              <Edit3 size={14} />
+              {t('home.edit')}
+            </Link>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); setShowQRPopup(true); }}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-50/80 text-gray-700

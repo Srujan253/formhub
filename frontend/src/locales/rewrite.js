@@ -53,7 +53,7 @@ const jpData = {
     dontHave: "アカウントをお持ちではありませんか？ 登録",
     pulseAnimation: "申請はモデレーターに送信されました。確認が完了次第、アクセス可能になります。"
   },
-  admin: {
+  manager: {
     userManagement: "ユーザー管理",
     verify: "承認する",
     delete: "削除"
