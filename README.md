@@ -265,7 +265,7 @@ google forms/
 - [ ] QR code generation for easy form sharing
 - [ ] Bulk email sending functionality
 - [ ] Form analytics and charts
-- [ ] User authentication and form ownership
+
 - [ ] Form branching logic
 - [ ] File upload support
 - [ ] Form templates library
