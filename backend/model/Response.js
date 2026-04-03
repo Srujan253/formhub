@@ -22,12 +22,12 @@ const responseSchema = new mongoose.Schema(
     ],
     respondentName: {
       type: String,
-      default: 'Anonymous',
+      default: '',
       trim: true,
     },
     respondentEmail: {
       type: String,
-      default: 'anonymous',
+      default: '',
     },
   },
   { timestamps: true }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -13,9 +14,19 @@ import {
   RemoveFormatting 
 } from 'lucide-react';
 
+const CustomEnterOption = Extension.create({
+  name: 'customEnterOption',
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => this.editor.commands.setHardBreak(),
+    };
+  },
+});
+
 const RichTextEditor = ({ content, onChange, placeholder }) => {
   const editor = useEditor({
     extensions: [
+      CustomEnterOption,
       StarterKit.configure({
         heading: false, // disable headings to keep it simple for descriptions
         codeBlock: false,

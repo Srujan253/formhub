@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2 } from 'lucide-react';
+import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2, Eye } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -12,6 +12,8 @@ import Toast from '../components/Toast';
 import ImageUpload from '../components/ImageUpload';
 import RichTextEditor from '../components/RichTextEditor';
 import MediaUpload from '../components/MediaUpload';
+import ShareModal from '../components/ShareModal';
+import FormViewer from './FormViewer';
 import { useBeforeUnload } from 'react-use';
 
 const SaveStatus = ({ status, t }) => (
@@ -71,6 +73,7 @@ const FormBuilder = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -280,8 +283,8 @@ const FormBuilder = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto px-4 py-8 flex">
-      <div className="flex-1 pr-16 relative">          <AnimatePresence>
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className={`mx-auto px-4 lg:px-8 py-8 flex transition-all duration-300 ease-in-out ${showLivePreview ? 'w-full max-w-[1800px] gap-8' : 'w-full max-w-4xl'}`}>
+      <div className={`relative transition-all duration-300 ${showLivePreview ? 'w-full lg:w-1/2 lg:pr-12 lg:border-r lg:border-gray-100' : 'w-full pr-12 sm:pr-16 md:pr-16'}`}>          <AnimatePresence>
             {showExitConfirm && (
               <motion.div
                 initial={{ opacity: 0, y: -20, x: '-50%' }}
@@ -431,7 +434,24 @@ const FormBuilder = () => {
       </div>
 
       {/* Floating Palette aligned right of active section loosely */}
-      <div className="fixed top-1/2 -translate-y-1/2 right-[max(20px,calc(50vw-450px))] flex flex-col gap-2 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass z-50">
+      <div className={`fixed top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass z-50 transition-all duration-300 ${showLivePreview ? 'hidden lg:flex right-[calc(50vw+20px)]' : 'right-2 sm:right-4 md:right-[max(20px,calc(50vw-450px))]'}`}>
+        <PaletteTool
+          icon={Eye}
+          label={t('formBuilder.preview', { defaultValue: 'Live Preview' })}
+          onClick={() => {
+            if (window.innerWidth < 1024) {
+              if (id) {
+                window.open(`/form/${id}`, '_blank');
+              } else {
+                setToast({ message: 'Please save the form before previewing.', type: 'error' });
+                setTimeout(() => setToast(null), 3000);
+              }
+            } else {
+              setShowLivePreview(!showLivePreview);
+            }
+          }}
+        />
+        <div className="w-6 h-[1px] bg-gray-200 mx-auto my-1" />
         <PaletteTool icon={Plus} label={t('formBuilder.addQuestion')} onClick={() => handleAddItem(activeSection, 'question')} />
         <div className="w-6 h-[1px] bg-gray-200 mx-auto my-1" />
         <PaletteTool icon={Type} label={t('formBuilder.addTitleDesc')} onClick={() => handleAddItem(activeSection, 'layout_block', 'title_desc')} />
@@ -440,16 +460,43 @@ const FormBuilder = () => {
         <PaletteTool icon={LayoutList} label={t('formBuilder.sectionBreak')} onClick={handleAddSection} />
       </div>
 
-      <div className="fixed bottom-8 left-0 right-0 z-40 px-4 pointer-events-none">
-        <div className="max-w-3xl mx-auto flex justify-center pb-8">
-          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="flex gap-3 p-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-glass pointer-events-auto">
-            <motion.button onClick={handleSaveForm} disabled={saving || !hasUnsavedChanges} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md transition-all duration-300 ${saving || !hasUnsavedChanges ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 shadow-gray-200/20'}`}>
-              {saving ? <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> : <Save size={18} />}
-              {saving ? t('formBuilder.saving') : hasUnsavedChanges ? t('formBuilder.saveNow') : t('formBuilder.allSaved')}
+      <AnimatePresence>
+        {showLivePreview && (
+          <motion.div
+            initial={{ opacity: 0, x: 20, width: 0 }}
+            animate={{ opacity: 1, x: 0, width: '50%' }}
+            exit={{ opacity: 0, x: 20, width: 0 }}
+            className="hidden lg:block flex-1 bg-gray-50/50 rounded-3xl border border-gray-200 overflow-hidden shadow-inner sticky top-8 h-[calc(100vh-64px)] max-h-screen overflow-y-auto"
+          >
+            <div className="pointer-events-none relative h-full">
+              <FormViewer previewData={{ ...formData, sections: formData.sections }} isPreviewMode={true} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {hasUnsavedChanges && (
+          <motion.div
+            initial={{ y: 100, opacity: 0, x: '-50%' }}
+            animate={{ y: 0, opacity: 1, x: '-50%' }}
+            exit={{ y: 100, opacity: 0, x: '-50%' }}
+            className="fixed bottom-8 left-1/2 z-[100] flex gap-3 p-2 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-2xl"
+          >
+            <motion.button onClick={handleSaveForm} disabled={saving} className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-base shadow-md transition-all duration-300 ${saving ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700 shadow-primary-500/20'}`}>
+              {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={20} />}
+              {saving ? t('formBuilder.saving', { defaultValue: 'Saving...' }) : t('formBuilder.saveNow', { defaultValue: 'Save Changes' })}
             </motion.button>
           </motion.div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareToken={formData?.shareToken}
+        formTitle={formData?.title}
+      />
     </motion.div>
   );
 };

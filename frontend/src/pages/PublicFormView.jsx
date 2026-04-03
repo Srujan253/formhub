@@ -143,7 +143,7 @@ const PublicFormView = () => {
       await responseAPI.submitPublicResponse({
         shareToken: token,
         answers: formattedAnswers,
-        respondentName: respondentName.trim() || 'Anonymous',
+        respondentName: respondentName.trim() || '',
       });
 
       setSuccess(true);

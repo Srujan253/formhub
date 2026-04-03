@@ -1,72 +1,54 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, AlertCircle, BarChart3, Users, HelpCircle, Calendar, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, Download, AlertCircle, BarChart3, Users, HelpCircle, Calendar, TrendingUp, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
+import { formatDistanceToNow, format } from 'date-fns';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-// Simple horizontal bar chart component
-const OptionChart = ({ question, responses }) => {
-  const distribution = useMemo(() => {
-    const counts = {};
-    question.options.forEach((opt) => {
-      counts[opt.text] = 0;
-    });
+const QuestionSimpleVisual = ({ question, responses }) => {
+  const [expanded, setExpanded] = useState(false);
 
-    responses.forEach((response) => {
-      const answer = response.answers.find((a) => a.questionId === question.id);
-      if (answer) {
-        if (Array.isArray(answer.value)) {
-          answer.value.forEach((v) => {
-            if (counts[v] !== undefined) counts[v]++;
-          });
-        } else if (counts[answer.value] !== undefined) {
-          counts[answer.value]++;
-        }
-      }
-    });
+  const rawAnswers = useMemo(() => {
+    return responses
+      .map(r => r.answers.find(a => a.questionId === question.id)?.value)
+      .filter(v => v !== undefined && v !== null && v !== '')
+      .flatMap(v => Array.isArray(v) ? v : [v]);
+  }, [responses, question.id]);
 
-    const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    return Object.entries(counts).map(([label, count]) => ({
-      label,
-      count,
-      percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-    }));
-  }, [question, responses]);
+  if (!rawAnswers.length) {
+    return (
+      <div className="text-sm text-gray-400 italic py-2">No answers yet</div>
+    );
+  }
 
-  const maxCount = Math.max(...distribution.map((d) => d.count), 1);
-
-  const barColors = [
-    'from-primary-400 to-primary-600',
-    'from-emerald-400 to-emerald-600',
-    'from-amber-400 to-amber-600',
-    'from-rose-400 to-rose-600',
-    'from-sky-400 to-sky-600',
-    'from-violet-400 to-violet-600',
-    'from-orange-400 to-orange-600',
-    'from-teal-400 to-teal-600',
-  ];
-
+  const displayAnswers = expanded ? rawAnswers : rawAnswers.slice(0, 8);
   return (
-    <div className="space-y-2.5">
-      {distribution.map((item, index) => (
-        <div key={item.label} className="flex items-center gap-3">
-          <span className="text-xs text-gray-600 font-medium w-24 truncate text-right flex-shrink-0">
-            {item.label}
-          </span>
-          <div className="flex-1 h-7 bg-gray-100/80 rounded-lg overflow-hidden relative">
+    <div>
+      <div className="flex flex-wrap gap-2">
+        <AnimatePresence>
+          {displayAnswers.map((ans, i) => (
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(item.count / maxCount) * 100}%` }}
-              transition={{ duration: 0.6, delay: index * 0.1, ease: 'easeOut' }}
-              className={`h-full bg-gradient-to-r ${barColors[index % barColors.length]} rounded-lg min-w-[2px]`}
-            />
-          </div>
-          <span className="text-xs font-bold text-gray-800 w-12 text-right flex-shrink-0">
-            {item.count} <span className="text-gray-400 font-normal">({item.percentage}%)</span>
-          </span>
-        </div>
-      ))}
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-full border border-gray-200"
+            >
+              {ans}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+      {rawAnswers.length > 8 && (
+        <button 
+          onClick={() => setExpanded(!expanded)} 
+          className="mt-3 text-sm font-semibold text-primary-600 hover:text-primary-700"
+        >
+          {expanded ? 'Show Less' : `+${rawAnswers.length - 8} more`}
+        </button>
+      )}
     </div>
   );
 };
@@ -79,7 +61,7 @@ const ResponsesDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('summary');
-
+    const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
   useEffect(() => {
     fetchData();
   }, [formId]);
@@ -110,6 +92,16 @@ const ResponsesDashboard = () => {
     return form.questions || [];
   }, [form]);
 
+  const trendData = useMemo(() => {
+    if (!responses.length) return [];
+    const counts = {};
+    responses.forEach(r => {
+      const dateStr = format(new Date(r.createdAt), 'MMM d');
+      counts[dateStr] = (counts[dateStr] || 0) + 1;
+    });
+    return Object.entries(counts).map(([date, count]) => ({ date, count }));
+  }, [responses]);
+
   const downloadCSV = () => {
     if (responses.length === 0) {
       alert('No responses to download');
@@ -124,10 +116,10 @@ const ResponsesDashboard = () => {
     })];
     const csvContent = [
       headers.map(escapeCSV).join(','),
-      ...responses.map((response) => {
+      ...responses.map((response, index) => {
         const dt = new Date(response.createdAt);
         const row = [
-          escapeCSV(response.respondentName || 'Anonymous'),
+          escapeCSV(response.respondentName && response.respondentName.toLowerCase() !== 'anonymous' ? response.respondentName : `Respondent ${index + 1}`),
           escapeCSV(dt.toLocaleDateString()),
           escapeCSV(dt.toLocaleTimeString()),
         ];
@@ -245,12 +237,21 @@ const ResponsesDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: { staggerChildren: 0.08 }
+            }
+          }}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15 }}
-            className="p-4 bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-2xl border border-primary-100/50"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            className="p-4 bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-2xl border-l-4 border-primary-500 shadow-sm"
           >
             <div className="flex items-center gap-2 mb-1">
               <Users size={14} className="text-primary-500" />
@@ -259,10 +260,8 @@ const ResponsesDashboard = () => {
             <p className="text-2xl font-extrabold text-primary-900">{responses.length}</p>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl border border-emerald-100/50"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl border-l-4 border-emerald-500 shadow-sm"
           >
             <div className="flex items-center gap-2 mb-1">
               <HelpCircle size={14} className="text-emerald-500" />
@@ -271,10 +270,8 @@ const ResponsesDashboard = () => {
             <p className="text-2xl font-extrabold text-emerald-900">{allQuestions.length}</p>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.25 }}
-            className="p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl border border-amber-100/50"
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            className="p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl border-l-4 border-amber-500 shadow-sm"
           >
             <div className="flex items-center gap-2 mb-1">
               <Calendar size={14} className="text-amber-500" />
@@ -284,7 +281,21 @@ const ResponsesDashboard = () => {
               {new Date(form.createdAt).toLocaleDateString()}
             </p>
           </motion.div>
-        </div>
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            className="p-4 bg-gradient-to-br from-violet-50 to-violet-100/50 rounded-2xl border-l-4 border-violet-500 shadow-sm"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Clock size={14} className="text-violet-500" />
+              <p className="text-violet-600 text-xs font-semibold uppercase tracking-wider">Last Response</p>
+            </div>
+            <p className="text-sm font-bold text-violet-900">
+              {responses.length > 0 
+                ? formatDistanceToNow(new Date(Math.max(...responses.map(r => new Date(r.createdAt).getTime()))), { addSuffix: true })
+                : 'Never'}
+            </p>
+          </motion.div>
+        </motion.div>
       </motion.div>
 
       {error && (
@@ -337,116 +348,155 @@ const ResponsesDashboard = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-5"
+          className="space-y-6"
         >
-          {chartableQuestions.length > 0 && (
-            <>
-              {chartableQuestions.map((question, index) => (
-                <motion.div
-                  key={question.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                  className="card"
-                >
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <BarChart3 size={14} className="text-primary-500" />
-                      <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">
-                        {question.type.replace('_', ' ')}
-                      </span>
-                    </div>
-                      <div 
-                        className="text-base font-bold text-gray-900 prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
-                      />
-                  </div>
-                  <OptionChart question={question} responses={responses} />
-                </motion.div>
-              ))}
-            </>
-          )}
+          {/* Trend Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true }}
+            className="card bg-slate-900 rounded-xl shadow-sm border border-slate-800 overflow-hidden"
+          >
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-white leading-tight">Response Trend</h2>
+              <p className="text-xs text-slate-400 font-medium">Submissions over time</p>
+            </div>
+            <div className="h-[250px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="date" tick={{fontSize: 12, fill: '#94a3b8'}} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', border: '1px solid #334155', color: '#f8fafc', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#cbd5e1', marginBottom: '4px' }}
+                    formatter={(value) => [`${value} ${value === 1 ? 'response' : 'responses'}`, '']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#6366f1" 
+                    strokeWidth={2.5} 
+                    dot={{ r: 5, fill: "white", stroke: "#6366f1", strokeWidth: 2 }} 
+                    activeDot={{ r: 7, fill: "#6366f1", stroke: "white", strokeWidth: 2, style: { filter: "drop-shadow(0 0 6px #6366f1)" } }} 
+                    isAnimationActive={true} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
 
-          {/* Text responses summary */}
-          {allQuestions
-            .filter((q) => ['short_answer', 'paragraph'].includes(q.type))
-            .map((question, index) => (
-              <motion.div
-                key={question.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (chartableQuestions.length + index) * 0.08 }}
-                className="card"
-              >
-                <h3 className="text-base font-bold text-gray-900 mb-3 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {responses.map((response, rIndex) => {
-                    const answer = response.answers.find((a) => a.questionId === question.id);
-                    if (!answer?.value) return null;
-                    return (
-                      <div
-                        key={rIndex}
-                        className="px-4 py-2.5 bg-gray-50/80 rounded-xl text-sm text-gray-700 border border-gray-100/80"
-                      >
-                        {answer.value}
-                      </div>
-                    );
-                  })}
+          {/* Question Renderers */}
+          {allQuestions.map((question, index) => (
+            <motion.div
+              key={question.id}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 * (index % 5) }}
+              className="card bg-white rounded-xl shadow-sm border border-gray-100"
+            >
+              <div className="mb-5 flex items-start gap-3 border-b border-gray-50 pb-3">
+                <div className="bg-primary-50 text-primary-600 font-bold text-xs px-2 py-1 rounded-md shrink-0 mt-0.5">
+                  Q{index + 1}
                 </div>
-              </motion.div>
-            ))}
+                <div className="flex-1">
+                  <div 
+                    className="text-base font-bold text-gray-900 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
+                  />
+                </div>
+              </div>
+              <QuestionSimpleVisual question={question} responses={responses} />
+            </motion.div>
+          ))}
         </motion.div>
       ) : (
-        /* Individual Responses */
+        /* Individual Responses (Paginated) */
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-4"
+          className="space-y-4 max-w-3xl mx-auto"
         >
-          {responses.map((response, index) => (
+          {responses.length > 0 && (
             <motion.div
-              key={response._id}
+              key={responses[currentResponseIndex]._id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: 0.05 }}
               className="card"
             >
-              <div className="mb-4 pb-3 border-b border-gray-100/80 flex items-center justify-between">
+              {/* Pagination Controls */}
+              <div className="mb-6 flex items-center justify-between bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                <button
+                  onClick={() => setCurrentResponseIndex(prev => Math.max(0, prev - 1))}
+                  disabled={currentResponseIndex === 0}
+                  className="p-2 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none border border-transparent hover:border-gray-200"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Response {currentResponseIndex + 1} of {responses.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setCurrentResponseIndex(prev => Math.min(responses.length - 1, prev + 1))}
+                  disabled={currentResponseIndex === responses.length - 1}
+                  className="p-2 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm disabled:shadow-none border border-transparent hover:border-gray-200"
+                >
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+
+              {/* Respondent Info */}
+              <div className="mb-6 pb-4 border-b border-gray-100/80 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    {(response.respondentName || 'A').charAt(0).toUpperCase()}
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm backdrop-blur-sm">
+                    {(() => {
+                      const name = responses[currentResponseIndex].respondentName;
+                      const validName = name && name.toLowerCase() !== 'anonymous' ? name : `Respondent ${currentResponseIndex + 1}`;
+                      return validName.charAt(0).toUpperCase();
+                    })()}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {response.respondentName || 'Anonymous'}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Response #{index + 1} • {new Date(response.createdAt).toLocaleString()}
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-base font-bold text-gray-900">
+                        {(() => {
+                          const name = responses[currentResponseIndex].respondentName;
+                          return name && name.toLowerCase() !== 'anonymous' ? name : `Respondent ${currentResponseIndex + 1}`;
+                        })()}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 font-medium">
+                      {new Date(responses[currentResponseIndex].createdAt).toLocaleString()}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              {/* Answers List */}
+              <div className="space-y-6">
                 {allQuestions.map((question) => {
-                  const answer = response.answers.find(
+                  const answer = responses[currentResponseIndex].answers.find(
                     (a) => a.questionId === question.id
                   );
 
                   return (
-                    <div key={question.id}>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
-                      <div className="px-4 py-2.5 bg-gray-50/80 rounded-xl text-sm text-gray-700 border border-gray-100/80">
-                        {Array.isArray(answer?.value)
-                          ? answer.value.join(', ')
-                          : answer?.value || <span className="text-gray-400 italic">No answer</span>}
+                    <div key={question.id} className="relative">
+                      <div className="text-sm font-semibold text-gray-800 mb-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
+                      <div className="px-4 py-3 bg-gray-50/80 rounded-xl text-sm text-gray-700 border border-gray-100/80 min-h-[44px]">
+                        {Array.isArray(answer?.value) 
+                          ? (answer.value.length > 0 ? answer.value.join(', ') : <span className="text-gray-400 italic">No answer</span>)
+                          : answer?.value ? answer.value : <span className="text-gray-400 italic">No answer</span>}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </motion.div>
-          ))}
+          )}
         </motion.div>
       )}
     </motion.div>

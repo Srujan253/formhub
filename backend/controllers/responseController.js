@@ -13,8 +13,8 @@ export const submitResponse = async (req, res) => {
     const newResponse = new Response({
       formId,
       answers,
-      respondentName: respondentName || 'Anonymous',
-      respondentEmail: respondentEmail || 'anonymous',
+      respondentName: respondentName || '',
+      respondentEmail: respondentEmail || '',
     });
 
     await newResponse.save();
@@ -46,7 +46,7 @@ export const submitPublicResponse = async (req, res) => {
       formId: form._id,
       answers,
       respondentName: respondentName.trim(),
-      respondentEmail: respondentEmail || 'anonymous',
+      respondentEmail: respondentEmail || '',
     });
 
     await newResponse.save();

@@ -108,6 +108,28 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
              onChange={handleTitleChange}
              placeholder={isLayoutBlock ? t('formBuilder.enterTitleHint', { defaultValue: 'Enter title here (optional)' }) : t('formBuilder.enterQuestionHint', { defaultValue: 'Enter question here' })}
           />
+          
+          {!isLayoutBlock && !question.hasDescription && !question.description && (
+             <button type="button" onClick={() => onChange({ ...question, hasDescription: true })} className="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2 focus:outline-none hover:underline">
+                {t('formBuilder.addDescription', { defaultValue: 'Add Description' })}
+             </button>
+          )}
+          {!isLayoutBlock && (question.hasDescription || question.description) && (
+            <div className="mt-3 relative group border border-gray-100 rounded-xl bg-gray-50/50">
+              <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100">
+                <label className="form-label !mb-0 text-xs text-gray-500 uppercase">{t('formBuilder.description', { defaultValue: 'Description' })}</label>
+                <button type="button" onClick={() => onChange({ ...question, hasDescription: false, description: '' })} className="text-gray-400 hover:text-red-500 transition-colors" title="Remove description">
+                  <X size={14} />
+                </button>
+              </div>
+              <RichTextEditor
+                content={question.description || ''}
+                onChange={handleDescriptionChange}
+                placeholder={t('formBuilder.enterDescriptionHint', { defaultValue: 'Enter description here (optional)' })}
+              />
+            </div>
+          )}
+
           {isLayoutBlock && question.layoutType === 'title_desc' && (
             <div className="mt-3 border rounded-xl overflow-hidden bg-white">
               <label className="form-label px-3 py-2 text-xs text-gray-500 uppercase">{t('formBuilder.textSegment', { defaultValue: 'Text Segment (Description)' })}</label>

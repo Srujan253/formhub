@@ -55,9 +55,9 @@ const QuestionPreview = ({ question, answer, onChange, errors }) => {
         </div>
       </div>
 
-      {isLayoutBlock && question.description && (
-        <div 
-          className="prose prose-sm max-w-none text-gray-500 leading-relaxed mb-4 break-words"
+{question.description && (
+        <div
+          className="prose prose-sm max-w-none text-gray-500 font-normal leading-relaxed mb-4 break-words"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.description) }}
         />
       )}

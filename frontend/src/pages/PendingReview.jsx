@@ -2,17 +2,24 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 const PendingReview = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   // If they are somehow verified, redirect to home
   if (user?.isVerified) {
     navigate('/');
   }
+
+  const handleGoBackToLogin = () => {
+    logout();
+    navigate('/login');
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'jp' : 'en';
@@ -64,7 +71,7 @@ const PendingReview = () => {
             : 'あなたのお申し込みはモデレーターに送信されています。確認され次第、アクセス可能になります。'}
         </p>
 
-        <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+<div className="bg-slate-100 p-4 rounded-xl border border-slate-200 mb-8">
            <p className="text-sm font-semibold text-slate-700 mb-1">Status:</p>
            <div className="flex items-center gap-2 justify-center text-amber-600 font-bold">
               <span className="relative flex h-3 w-3">
@@ -74,6 +81,16 @@ const PendingReview = () => {
               Pending Approval
            </div>
         </div>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleGoBackToLogin}
+          className="flex items-center justify-center gap-2 w-full py-3.5 px-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl shadow-sm hover:bg-slate-50 hover:text-slate-800 transition-colors"
+        >
+          <LogOut size={18} />
+          {i18n.language === 'en' ? 'Log out / Switch Account' : 'ログアウトして別のアカウントを使用'}
+        </motion.button>
       </motion.div>
     </div>
   );

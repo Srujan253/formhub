@@ -6,11 +6,11 @@ import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
-const FormViewer = () => {
+const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(previewData);
+  const [loading, setLoading] = useState(!previewData);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -18,8 +18,13 @@ const FormViewer = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetchForm();
-  }, [id]);
+    if (previewData) {
+      setForm(previewData);
+      setLoading(false);
+    } else if (id) {
+      fetchForm();
+    }
+  }, [id, previewData]);
 
   const fetchForm = async () => {
     try {
@@ -46,14 +51,21 @@ const FormViewer = () => {
     }
   };
 
+  const getAllItems = () => {
+    if (form.sections && form.sections.length > 0) {
+      return form.sections.flatMap(section => section.items || []);
+    }
+    return form.questions || [];
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    form.questions.forEach((question) => {
-      if (question.required) {
-        const answer = answers[question.id];
+    getAllItems().forEach((item) => {
+      if (item.type !== 'layout_block' && item.required) {
+        const answer = answers[item.id];
         if (!answer || (Array.isArray(answer) && answer.length === 0)) {
-          newErrors[question.id] = true;
+          newErrors[item.id] = true;
         }
       }
     });
@@ -70,13 +82,21 @@ const FormViewer = () => {
       return;
     }
 
+    if (isPreviewMode) {
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const formattedAnswers = form.questions.map((question) => ({
-        questionId: question.id,
-        questionType: question.type,
-        value: answers[question.id] || '',
-      }));
+      const formattedAnswers = getAllItems()
+        .filter(item => item.type !== 'layout_block')
+        .map((question) => ({
+          questionId: question.id,
+          questionType: question.type,
+          value: answers[question.id] || '',
+        }));
 
       await responseAPI.submitResponse({
         formId: id,
@@ -178,17 +198,19 @@ const FormViewer = () => {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="max-w-2xl mx-auto px-4 py-8"
+      className={`max-w-2xl mx-auto ${isPreviewMode ? 'px-1' : 'px-4'} py-8`}
     >
-      <motion.button
-        whileHover={{ x: -2 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => navigate('/')}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium mb-6"
-      >
-        <ArrowLeft size={16} />
-        Back
-      </motion.button>
+      {!isPreviewMode && (
+        <motion.button
+          whileHover={{ x: -2 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium mb-6"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </motion.button>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -226,21 +248,35 @@ const FormViewer = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-        {form.questions.map((question, index) => (
-          <motion.div
-            key={question.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + index * 0.05 }}
-          >
-            <QuestionPreview
-              question={question}
-              answer={answers[question.id]}
-              onChange={handleAnswerChange}
-              errors={errors}
-            />
-          </motion.div>
-        ))}
+        {(form.sections && form.sections.length > 0 ? form.sections : [{ id: 'default', title: '', items: form.questions || [] }]).map((section, sIndex) => {
+          const isDefaultFirstSection = sIndex === 0 && form.sections.length <= 1 && (!section.title || section.title === 'Section 1') && !section.description;
+          
+          return (
+          <div key={section.id || sIndex} className="mb-8 space-y-4">
+            {!isDefaultFirstSection && (section.title || section.description) && (
+              <div className="mb-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                {section.title && <h2 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-2">{section.title}</h2>}
+                {section.description && <p className="text-gray-500 mt-2 text-sm">{section.description}</p>}
+              </div>
+            )}
+            {(section.items || []).map((question, index) => (
+              <motion.div
+                key={question.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              >
+                <QuestionPreview
+                  question={question}
+                  answer={answers[question.id]}
+                  onChange={handleAnswerChange}
+                  errors={errors}
+                />
+              </motion.div>
+            ))}
+          </div>
+        );
+      })}
 
         <motion.button
           whileHover={{ scale: 1.01, y: -1 }}
