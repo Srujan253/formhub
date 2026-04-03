@@ -23,7 +23,7 @@ app.use(cors({
     if (
       allowedOriginPattern.test(new URL(origin).hostname) ||
       origin.startsWith('http://localhost') ||
-      origin === 'https://formhub-snowy.vercel.app'
+      origin === 'survey-application-japan.vercel.app'
     ) {
       return callback(null, true);
     }
