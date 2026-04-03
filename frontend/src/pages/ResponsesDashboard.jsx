@@ -378,7 +378,7 @@ const ResponsesDashboard = () => {
                 transition={{ delay: (chartableQuestions.length + index) * 0.08 }}
                 className="card"
               >
-                <h3 className="text-base font-bold text-gray-900 mb-3">{question.title}</h3>
+                <h3 className="text-base font-bold text-gray-900 mb-3 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {responses.map((response, rIndex) => {
                     const answer = response.answers.find((a) => a.questionId === question.id);
@@ -435,9 +435,7 @@ const ResponsesDashboard = () => {
 
                   return (
                     <div key={question.id}>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                        {question.title}
-                      </p>
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
                       <div className="px-4 py-2.5 bg-gray-50/80 rounded-xl text-sm text-gray-700 border border-gray-100/80">
                         {Array.isArray(answer?.value)
                           ? answer.value.join(', ')
