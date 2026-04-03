@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserCheck, UserX, Shield, ShieldAlert, UserPlus, X } from 'lucide-react';
+import { UserCheck, UserX, Shield, ShieldAlert, UserPlus, X, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
@@ -12,12 +12,13 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showStaffModal, setShowStaffModal] = useState(false);
-  const [staffData, setStaffData] = useState({ name: '', email: '', password: '' });
+  const [staffData, setStaffData] = useState({ name: '', email: '', password: '', role: 'staff' });
   const [staffLoading, setStaffLoading] = useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
   const currentRole = useAuthStore((state) => state.role);
-  
+
   useEffect(() => {
     if (currentRole !== 'admin' && currentRole !== 'manager') {
       navigate('/404');
@@ -75,7 +76,7 @@ const AdminPanel = () => {
       const { data } = await api.post('/admin/staff', staffData);
       setUsers([data, ...users]); // add new user to front of list
       setShowStaffModal(false);
-      setStaffData({ name: '', email: '', password: '' });
+      setStaffData({ name: '', email: '', password: '', role: 'staff' });
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating staff user');
     } finally {
@@ -103,7 +104,7 @@ const AdminPanel = () => {
           className="btn-primary flex justify-center items-center gap-2"
         >
           <UserPlus size={18} />
-          Create Staff Account
+          {currentRole === 'admin' ? 'Create User' : 'Create Staff Account'}
         </button>
       </div>
 
@@ -125,13 +126,13 @@ const AdminPanel = () => {
               className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white rounded-3xl shadow-xl z-50 p-6"
+              initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+              exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
+              className="fixed top-1/2 left-1/2 w-[90%] max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-xl z-50 p-6"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold font-manrope">Create Staff Account</h3>
+                <h3 className="text-xl font-bold font-manrope">{currentRole === 'admin' ? 'Create User' : 'Create Staff Account'}</h3>
                 <button onClick={() => setShowStaffModal(false)} className="text-slate-400 hover:text-slate-600 transition">
                   <X size={20} />
                 </button>
@@ -162,15 +163,38 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={staffData.password}
-                    onChange={(e) => setStaffData({ ...staffData, password: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 outline-none transition"
-                    placeholder="Set temporary password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={staffData.password}
+                      onChange={(e) => setStaffData({ ...staffData, password: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl py-3 px-4 pr-12 focus:ring-2 focus:ring-primary-500 outline-none transition"
+                      placeholder="Set temporary password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
+                  {currentRole === 'admin' && (
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Role</label>
+                      <select
+                        value={staffData.role}
+                        onChange={(e) => setStaffData({ ...staffData, role: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 outline-none transition"
+                      >
+                        <option value="staff">Staff</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  )}
                 
                 <div className="pt-4">
                   <button
@@ -245,22 +269,21 @@ const AdminPanel = () => {
                      >
                         <option value="staff">Staff</option>
                         {currentRole === 'admin' && <option value="manager">Manager</option>}
-                        {currentRole === 'admin' && <option                           {currentRole === 'admin' && <option value="admin">Admin</option>}
-                       </select>
-                    </div>
-                  
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      disabled={currentRole === 'manager' || user.email === 'ksrujan026@gmail.com'}
-                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    >isabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <UserX size={18} />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                        {currentRole === 'admin' && <option value="admin">Admin</option>}
+                     </select>
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(user._id)}
+                    disabled={currentRole === 'manager' || user.email === 'ksrujan026@gmail.com'}
+                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <UserX size={18} />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
         {users.length === 0 && !loading && (
           <div className="col-span-full py-12 text-center text-slate-500">

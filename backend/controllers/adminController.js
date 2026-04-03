@@ -22,19 +22,24 @@ export const getUsers = async (req, res) => {
 // @access  Private/SuperAdmin
 export const createStaffUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+const { name, email, password, role } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+      let assignedRole = role || 'staff';
+      if (req.user.role === 'manager') {
+         assignedRole = 'staff';
+      }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      about: 'Account created by Manager',
-      role: 'staff',
+      const userExists = await User.findOne({ email });
+      if (userExists) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+
+      const user = await User.create({
+        name,
+        email,
+        password,
+        about: 'Account created by Admin/Manager',
+        role: assignedRole,
       isVerified: true,
       createdBy: req.user._id
     });
