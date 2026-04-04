@@ -1,19 +1,58 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Upload } from 'lucide-react';
+import { Upload, X, FileText, File } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { cloudinaryAPI } from '../services/api';
 
-const QuestionPreview = ({ question, answer, onChange, errors }) => {
+const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => {
   const [localAnswer, setLocalAnswer] = useState(answer || '');
   const [localAnswers, setLocalAnswers] = useState(
     Array.isArray(answer) ? answer : []
   );
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const isLayoutBlock = question.type === 'layout_block';
 
   const handleTextChange = (e) => {
     setLocalAnswer(e.target.value);
     onChange(question.id, e.target.value);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (max 5MB just as an example, user wanted 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size exceeds 10MB limit');
+      return;
+    }
+    
+    setUploading(true);
+    setUploadError('');
+    
+    try {
+      const response = await cloudinaryAPI.uploadImage(file);
+      // The backend returns { success: true, url: ... } or { url: ... }
+      const fileUrl = response.url || response.secure_url;
+      if (fileUrl) {
+         setLocalAnswer(fileUrl);
+         onChange(question.id, fileUrl);
+      } else {
+         setUploadError('Upload failed: Invalid response from server');
+      }
+    } catch (err) {
+      console.error('File upload error:', err);
+      setUploadError('Failed to upload file. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeFile = () => {
+    setLocalAnswer('');
+    onChange(question.id, '');
   };
 
   const handleCheckboxChange = (optionText) => {
@@ -82,14 +121,19 @@ const QuestionPreview = ({ question, answer, onChange, errors }) => {
               </div>
               <div className="flex flex-col pr-8">
                 <span className="text-sm font-semibold text-gray-700">Attached Document</span>
-                <a 
-                  href={question.mediaUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-xs text-primary-500 hover:text-primary-600 hover:underline flex items-center gap-1 mt-0.5"
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onViewFile) {
+                      onViewFile(question.mediaUrl);
+                    } else {
+                      window.open(question.mediaUrl, '_blank');
+                    }
+                  }}
+                  className="text-xs text-primary-500 hover:text-primary-600 hover:underline flex items-center gap-1 mt-0.5 text-left"
                 >
                   View Details
-                </a>
+                </button>
               </div>
             </div>
           ) : (
@@ -345,14 +389,80 @@ const QuestionPreview = ({ question, answer, onChange, errors }) => {
 
       {question.type === 'file_upload' && (
         <div className="mt-4">
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer bg-gray-50/50 hover:bg-gray-100/50 transition-all group">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="w-8 h-8 mb-2 text-gray-400 group-hover:text-primary-500 transition-colors" />
-              <p className="mb-1 text-sm text-gray-500 font-medium">Click to upload or drag and drop</p>
-              <p className="text-xs text-gray-400">PDF, IMAGE, or DOCX (Max 10MB)</p>
-            </div>
-            <input type="file" className="hidden" />
-          </label>
+          {!localAnswer ? (
+             <div className="w-full relative">
+               <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all group ${
+                 isError ? 'border-red-300 bg-red-50/20' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100/50'
+               }`}>
+                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                   {uploading ? (
+                     <>
+                       <div className="w-8 h-8 mb-2 rounded-full border-[3px] border-primary-100 border-t-primary-500 animate-spin"></div>
+                       <p className="mb-1 text-sm text-primary-600 font-medium">Uploading...</p>
+                     </>
+                   ) : (
+                     <>
+                       <Upload className={`w-8 h-8 mb-2 transition-colors ${isError ? 'text-red-300 group-hover:text-red-400' : 'text-gray-400 group-hover:text-primary-500'}`} />
+                       <p className={`mb-1 text-sm font-medium ${isError ? 'text-red-500' : 'text-gray-500'}`}>Click to upload or drag and drop</p>
+                       <p className="text-xs text-gray-400">PDF, IMAGE, or DOCX (Max 10MB)</p>
+                     </>
+                   )}
+                 </div>
+                 <input 
+                   type="file" 
+                   className="hidden" 
+                   accept="image/*,.pdf,.doc,.docx" 
+                   onChange={handleFileUpload}
+                   disabled={uploading}
+                 />
+               </label>
+               {uploadError && <p className="text-red-500 text-xs mt-2 font-medium bg-red-50 p-2 rounded">{uploadError}</p>}
+             </div>
+          ) : (
+             <div className="relative group p-4 border border-gray-200 rounded-xl bg-white max-w-sm flex items-center justify-between shadow-sm">
+               <div className="flex items-center gap-4 overflow-hidden">
+                 {localAnswer.includes('/image/upload') || localAnswer.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
+                   <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50 flex items-center justify-center">
+                     <img src={localAnswer} alt="Preview" className="max-w-full max-h-full object-cover" />
+                   </div>
+                 ) : (
+                   <div className="p-2.5 bg-primary-50 text-primary-600 rounded-lg shrink-0 border border-primary-100/50">
+                     {localAnswer.toLowerCase().endsWith('.pdf') ? <FileText size={24} /> : <File size={24} />}
+                   </div>
+                 )}
+                 <div className="flex flex-col min-w-0">
+                   <p className="text-sm font-semibold text-gray-800 truncate" title={localAnswer.split('/').pop()}>
+                     {localAnswer.split('/').pop().substring(0, 20)}...
+                   </p>
+                   <button 
+                     onClick={(e) => {
+                       e.preventDefault();
+                       if (onViewFile) {
+                         onViewFile(localAnswer);
+                       } else {
+                         window.open(localAnswer, '_blank');
+                       }
+                     }}
+                     className="text-xs text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 mt-1 hover:underline text-left"
+                   >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                       <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                       <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                     </svg>
+                     Click to View
+                   </button>
+                 </div>
+               </div>
+               <button 
+                 type="button" 
+                 onClick={removeFile}
+                 className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-md transition-colors ml-2 shrink-0"
+                 title="Remove file"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+          )}
         </div>
       )}
 

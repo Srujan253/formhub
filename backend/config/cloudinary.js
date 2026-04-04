@@ -13,12 +13,20 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const isPdf = file.mimetype === 'application/pdf';
+    const isImage = file.mimetype && file.mimetype.startsWith('image/');
+    
+    // Extract the original extension from the file name
+    const originalName = file.originalname || '';
+    const extension = originalName.split('.').pop()?.toLowerCase();
+    
     return {
       folder: 'pulse-forms',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'pdf'],
-      resource_type: isPdf ? 'raw' : 'image',
-      ...(isPdf ? {} : { transformation: [{ width: 1200, height: 1200, crop: 'limit' }] })
+      resource_type: isImage ? 'image' : 'raw',
+      ...(isImage ? { transformation: [{ width: 1200, height: 1200, crop: 'limit' }] } : {
+        // Cloudinary requires the original extension in the public_id for raw files
+        // to recognize their format properly.
+        public_id: `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      })
     };
   },
 });

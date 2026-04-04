@@ -10,7 +10,58 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
 const truncateText = (str, n) => (str && str.length > n ? str.substr(0, n - 1) + '…' : str);
 
-const QuestionSimpleVisual = ({ question, responses }) => {
+const FileModal = ({ url, onClose }) => {
+  if (!url) return null;
+  const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 pt-8">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col"
+      >
+         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+           <h3 className="font-semibold text-gray-800">File Preview</h3>
+           <div className="flex items-center gap-2">
+             <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                 <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                 <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+               </svg>
+               Open Tab
+             </a>
+             <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+               </svg>
+             </button>
+           </div>
+         </div>
+         <div className="flex-1 overflow-auto bg-gray-100/50 flex items-center justify-center p-4 min-h-[400px]">
+           {isImg ? (
+             <img src={url} alt="Preview" className="max-w-full max-h-[calc(90vh-100px)] object-contain rounded drop-shadow-sm" />
+           ) : (
+             url.endsWith('.pdf') ? (
+               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title="PDF Preview" />
+             ) : (
+               <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
+                 <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                 <p className="text-gray-600 font-medium mb-3">No preview available for this file type.</p>
+                 <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                   Download / Open File
+                 </a>
+               </div>
+             )
+           )}
+         </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
   const [expanded, setExpanded] = useState(false);
 
   const isRadio = question.type === 'radio';
@@ -176,19 +227,49 @@ const QuestionSimpleVisual = ({ question, responses }) => {
   const displayAnswers = expanded ? rawAnswers : rawAnswers.slice(0, 8);
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         <AnimatePresence>
-          {displayAnswers.map((ans, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-full border border-gray-200"
-            >
-              {ans}
-            </motion.div>
-          ))}
+          {displayAnswers.map((ans, i) => {
+            const isFileUpload = question.type === 'file_upload';
+            const isImg = isFileUpload && typeof ans === 'string' && (ans.includes('/image/upload') || ans.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className={`max-w-[200px] overflow-hidden text-ellipsis px-3 py-2 bg-gray-50 text-gray-700 text-sm rounded-xl border border-gray-200 shadow-sm ${isImg ? 'p-2' : ''}`}
+              >
+                {isFileUpload && typeof ans === 'string' && ans.startsWith('http') ? (
+                  isImg ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="w-full h-24 rounded-lg overflow-hidden border border-gray-100 bg-white cursor-pointer hover:ring-2 ring-primary-500/50 transition-all" onClick={() => onViewFile(ans)}>
+                        <img src={ans} alt="upload" className="w-full h-full object-cover" />
+                      </div>
+                      <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 text-xs font-semibold flex items-center justify-center gap-1 bg-white border border-gray-200 p-1.5 rounded shadow-sm hover:shadow hover:bg-gray-50 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        Quick View
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 underline break-all flex items-center gap-1 font-medium hover:bg-gray-50 px-2 py-1 -ml-2 rounded transition-colors w-full text-left">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="truncate">View Document</span>
+                    </button>
+                  )
+                ) : (
+                  ans
+                )}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
       {rawAnswers.length > 8 && (
@@ -211,7 +292,8 @@ const ResponsesDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('summary');
-    const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
+  const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
+  const [viewingFile, setViewingFile] = useState(null);
   useEffect(() => {
     fetchData();
   }, [formId]);
@@ -561,7 +643,7 @@ const ResponsesDashboard = () => {
                   />
                 </div>
               </div>
-              <QuestionSimpleVisual question={question} responses={responses} />
+              <QuestionSimpleVisual question={question} responses={responses} onViewFile={setViewingFile} />
             </motion.div>
           )})}
         </motion.div>
@@ -640,9 +722,32 @@ const ResponsesDashboard = () => {
                     <div key={question.id} className="relative">
                       <div className="text-sm font-semibold text-gray-800 mb-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }} />
                       <div className="px-4 py-3 bg-gray-50/80 rounded-xl text-sm text-gray-700 border border-gray-100/80 min-h-[44px]">
-                        {Array.isArray(answer?.value) 
-                          ? (answer.value.length > 0 ? answer.value.join(', ') : <span className="text-gray-400 italic">No answer</span>)
-                          : answer?.value ? answer.value : <span className="text-gray-400 italic">No answer</span>}
+                        {(() => {
+                          const val = answer?.value;
+                          if (!val || (Array.isArray(val) && val.length === 0)) {
+                             return <span className="text-gray-400 italic">No answer</span>;
+                          }
+                          if (question.type === 'file_upload' && typeof val === 'string') {
+                             const isImg = val.includes('/image/upload') || val.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                             return (
+                               <div className="flex flex-col gap-2 max-w-sm">
+                                 {isImg && (
+                                   <div className="h-40 w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500/50 transition-all" onClick={() => setViewingFile(val)}>
+                                      <img src={val} alt="Uploaded file" className="max-w-full max-h-full object-contain" />
+                                   </div>
+                                 )}
+                                 <button onClick={() => setViewingFile(val)} className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold bg-white p-2.5 rounded-lg border border-primary-100 shadow-sm transition-all hover:border-primary-300 w-fit hover:bg-gray-50">
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                     <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                   </svg>
+                                   Open Full View
+                                 </button>
+                               </div>
+                             );
+                          }
+                          return Array.isArray(val) ? val.join(', ') : val;
+                        })()}
                       </div>
                     </div>
                   );
@@ -652,6 +757,13 @@ const ResponsesDashboard = () => {
           )}
         </motion.div>
       )}
+
+      {/* File Preview Modal */}
+      <AnimatePresence>
+        {viewingFile && (
+          <FileModal url={viewingFile} onClose={() => setViewingFile(null)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

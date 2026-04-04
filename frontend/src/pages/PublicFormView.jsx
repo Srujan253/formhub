@@ -1,11 +1,62 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
+
+const FileModal = ({ url, onClose }) => {
+  if (!url) return null;
+  const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col"
+      >
+         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+           <h3 className="font-semibold text-gray-800">File Preview</h3>
+           <div className="flex items-center gap-2">
+             <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                 <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                 <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+               </svg>
+               Open Tab
+             </a>
+             <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+               </svg>
+             </button>
+           </div>
+         </div>
+         <div className="flex-1 overflow-auto bg-gray-100/50 flex items-center justify-center p-4 min-h-[400px]">
+           {isImg ? (
+             <img src={url} alt="Preview" className="max-w-full max-h-[calc(90vh-100px)] object-contain rounded drop-shadow-sm" />
+           ) : (
+             url.endsWith('.pdf') ? (
+               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title="PDF Preview" />
+             ) : (
+               <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
+                 <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                 <p className="text-gray-600 font-medium mb-3">No preview available for this file type.</p>
+                 <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                   Download / Open File
+                 </a>
+               </div>
+             )
+           )}
+         </div>
+      </motion.div>
+    </div>
+  );
+};
 
 const PublicFormView = () => {
   const { t } = useTranslation();
@@ -19,6 +70,7 @@ const PublicFormView = () => {
   const [errors, setErrors] = useState({});
   const [respondentName, setRespondentName] = useState('');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [viewingFile, setViewingFile] = useState(null);
 
   useEffect(() => {
     fetchForm();
@@ -279,6 +331,7 @@ const PublicFormView = () => {
                   answer={answers[item.id]}
                   onChange={handleAnswerChange}
                   errors={errors}
+                  onViewFile={setViewingFile}
                 />
               ))}
             </motion.div>
@@ -336,6 +389,9 @@ const PublicFormView = () => {
           </p>
         </div>
       </div>
+      <AnimatePresence>
+        {viewingFile && <FileModal url={viewingFile} onClose={() => setViewingFile(null)} />}
+      </AnimatePresence>
     </div>
   );
 };

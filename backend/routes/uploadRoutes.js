@@ -6,7 +6,8 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 const upload = multer({ storage });
 
-router.post('/upload', protect, upload.single('file'), (req, res) => {
+// Open upload route for both authenticated creators and public form submitters
+router.post('/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -14,9 +15,11 @@ router.post('/upload', protect, upload.single('file'), (req, res) => {
     
     res.json({
       success: true,
+      url: req.file.path, // multer-storage-cloudinary gives us the URL here
       secure_url: req.file.path,
       public_id: req.file.filename,
-      resource_type: req.file.mimetype === 'application/pdf' ? 'pdf' : 'image',
+      original_filename: req.file.originalname,
+      resource_type: req.file.mimetype.startsWith('image/') ? 'image' : 'raw',
     });
   } catch (error) {
     console.error('Upload error:', error);
