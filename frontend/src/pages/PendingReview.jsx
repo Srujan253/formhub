@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { useConfigStore } from '../store/useConfigStore';
 
 const PendingReview = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const setLanguage = useConfigStore((state) => state.setLanguage);
 
   // If they are somehow verified, redirect to home
   if (user?.isVerified) {
@@ -23,7 +25,7 @@ const PendingReview = () => {
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'jp' : 'en';
-    i18n.changeLanguage(newLang);
+    setLanguage(newLang);
   };
 
   return (
@@ -48,7 +50,7 @@ const PendingReview = () => {
           onClick={toggleLanguage}
           className="absolute top-4 right-4 text-xs font-bold text-slate-400 hover:text-slate-700 transition"
         >
-          {i18n.language === 'en' ? '日本語' : 'English'}
+          {i18n.language === 'en' ? t('auth.languageJapanese') : t('auth.languageEnglish')}
         </button>
 
         <motion.div
@@ -62,23 +64,21 @@ const PendingReview = () => {
         </motion.div>
 
         <h1 className="text-3xl font-extrabold text-slate-800 mb-3 font-manrope">
-          {i18n.language === 'en' ? 'Application under review' : '審査中'}
+          {t('auth.applicationUnderReview')}
         </h1>
         
         <p className="text-slate-500 mb-8 leading-relaxed">
-          {i18n.language === 'en' 
-            ? 'Your application is being beamed to our moderators. You’ll gain access once verified.' 
-            : 'あなたのお申し込みはモデレーターに送信されています。確認され次第、アクセス可能になります。'}
+          {t('auth.applicationReviewDesc')}
         </p>
 
 <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 mb-8">
-           <p className="text-sm font-semibold text-slate-700 mb-1">Status:</p>
+           <p className="text-sm font-semibold text-slate-700 mb-1">{t('auth.status')}</p>
            <div className="flex items-center gap-2 justify-center text-amber-600 font-bold">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
               </span>
-              Pending Approval
+              {t('auth.pendingApproval')}
            </div>
         </div>
 
@@ -89,7 +89,7 @@ const PendingReview = () => {
           className="flex items-center justify-center gap-2 w-full py-3.5 px-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl shadow-sm hover:bg-slate-50 hover:text-slate-800 transition-colors"
         >
           <LogOut size={18} />
-          {i18n.language === 'en' ? 'Log out / Switch Account' : 'ログアウトして別のアカウントを使用'}
+          {t('auth.logoutSwitchAccount')}
         </motion.button>
       </motion.div>
     </div>

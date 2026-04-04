@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Download, AlertCircle, BarChart3, Users, HelpCircle, Calendar, TrendingUp, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
@@ -11,6 +12,7 @@ const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
 const truncateText = (str, n) => (str && str.length > n ? str.substr(0, n - 1) + '…' : str);
 
 const FileModal = ({ url, onClose }) => {
+  const { t } = useTranslation();
   if (!url) return null;
   const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
   
@@ -23,14 +25,14 @@ const FileModal = ({ url, onClose }) => {
         className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col"
       >
          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-           <h3 className="font-semibold text-gray-800">File Preview</h3>
+           <h3 className="font-semibold text-gray-800">{t('dashboard.filePreview')}</h3>
            <div className="flex items-center gap-2">
              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                  <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                </svg>
-               Open Tab
+               {t('dashboard.openTab')}
              </a>
              <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -44,13 +46,13 @@ const FileModal = ({ url, onClose }) => {
              <img src={url} alt="Preview" className="max-w-full max-h-[calc(90vh-100px)] object-contain rounded drop-shadow-sm" />
            ) : (
              url.endsWith('.pdf') ? (
-               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title="PDF Preview" />
+               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title={t('dashboard.filePreview')} />
              ) : (
                <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                 <p className="text-gray-600 font-medium mb-3">No preview available for this file type.</p>
+                 <p className="text-gray-600 font-medium mb-3">{t('dashboard.noPreview')}</p>
                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-                   Download / Open File
+                   {t('dashboard.downloadOpen')}
                  </a>
                </div>
              )
@@ -62,6 +64,7 @@ const FileModal = ({ url, onClose }) => {
 };
 
 const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const isRadio = question.type === 'radio';
@@ -79,7 +82,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
       return (
         <div className="flex flex-col items-center justify-center py-8 text-gray-400">
           <TrendingUp size={32} className="mb-2 text-gray-300" />
-          <p className="text-sm">No responses yet</p>
+          <p className="text-sm">{t('dashboard.noResponsesYet')}</p>
         </div>
       );
     }
@@ -138,7 +141,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold text-gray-800">{totalRespondents}</span>
-              <span className="text-xs text-gray-400">responses</span>
+              <span className="text-xs text-gray-400">{t('dashboard.responses')}</span>
             </div>
           </div>
           
@@ -158,7 +161,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
               );
             })}
           </motion.div>
-          <div className="mt-8 text-xs text-gray-400 text-center font-medium">Based on {totalRespondents} {totalRespondents === 1 ? 'response' : 'responses'}</div>
+          <div className="mt-8 text-xs text-gray-400 text-center font-medium">{t('dashboard.basedOnResponses', { count: totalRespondents })}</div>
         </div>
       );
     } else {
@@ -196,7 +199,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
                       const { x, y, width, height, value } = props;
                       return (
                         <text x={x + width + 10} y={y + height / 2 + 4} fill="#64748b" fontSize={12} className="font-medium">
-                          {value} / {totalRespondents} respondents
+                          {value} / {totalRespondents} {t('dashboard.respondents')}
                         </text>
                       );
                     }} 
@@ -205,7 +208,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-6 text-xs text-gray-400 text-center font-medium">Based on {totalRespondents} {totalRespondents === 1 ? 'response' : 'responses'}</div>
+          <div className="mt-6 text-xs text-gray-400 text-center font-medium">{t('dashboard.basedOnResponses', { count: totalRespondents })}</div>
         </div>
       );
     }
@@ -220,7 +223,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
 
   if (!rawAnswers.length) {
     return (
-      <div className="text-sm text-gray-400 italic py-2">No answers yet</div>
+      <div className="text-sm text-gray-400 italic py-2">{t('dashboard.noAnswersYet')}</div>
     );
   }
 
@@ -252,7 +255,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                           <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                         </svg>
-                        Quick View
+                        {t('dashboard.quickView')}
                       </button>
                     </div>
                   ) : (
@@ -261,7 +264,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                         <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="truncate">View Document</span>
+                      <span className="truncate">{t('dashboard.viewDocument')}</span>
                     </button>
                   )
                 ) : (
@@ -277,7 +280,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
           onClick={() => setExpanded(!expanded)} 
           className="mt-3 text-sm font-semibold text-primary-600 hover:text-primary-700"
         >
-          {expanded ? 'Show Less' : `+${rawAnswers.length - 8} more`}
+          {expanded ? t('dashboard.showLess') : t('dashboard.showMore', { count: rawAnswers.length - 8 })}
         </button>
       )}
     </div>
@@ -285,6 +288,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
 };
 
 const ResponsesDashboard = () => {
+  const { t } = useTranslation();
   const { formId } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
@@ -391,7 +395,7 @@ const ResponsesDashboard = () => {
         >
           <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
         </motion.div>
-        <p className="text-gray-400 mt-4 text-sm font-medium">Loading responses...</p>
+        <p className="text-gray-400 mt-4 text-sm font-medium">{t('dashboard.loadingResponses')}</p>
       </div>
     );
   }
@@ -405,7 +409,7 @@ const ResponsesDashboard = () => {
           className="card text-center py-16"
         >
           <AlertCircle size={40} className="mx-auto text-gray-300 mb-4" />
-          <h2 className="text-xl font-bold text-gray-800">Form not found</h2>
+          <h2 className="text-xl font-bold text-gray-800">{t('dashboard.formNotFound')}</h2>
         </motion.div>
       </div>
     );
@@ -426,7 +430,7 @@ const ResponsesDashboard = () => {
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium mb-6"
       >
         <ArrowLeft size={16} />
-        Back to Forms
+        {t('dashboard.backToForms')}
       </motion.button>
 
       {/* Header card */}
@@ -463,7 +467,7 @@ const ResponsesDashboard = () => {
               className="btn-primary shrink-0 flex items-center gap-2 text-sm z-10 sm:mt-0"
             >
               <Download size={16} />
-              Export CSV
+              {t('dashboard.exportCsv')}
             </motion.button>
           )}
         </div>
@@ -487,7 +491,7 @@ const ResponsesDashboard = () => {
           >
             <div className="flex items-center gap-2 mb-1">
               <Users size={14} className="text-primary-500" />
-              <p className="text-primary-600 text-xs font-semibold uppercase tracking-wider">Responses</p>
+              <p className="text-primary-600 text-xs font-semibold uppercase tracking-wider">{t('dashboard.responsesTitle')}</p>
             </div>
             <p className="text-2xl font-extrabold text-primary-900">{responses.length}</p>
           </motion.div>
@@ -497,7 +501,7 @@ const ResponsesDashboard = () => {
           >
             <div className="flex items-center gap-2 mb-1">
               <HelpCircle size={14} className="text-emerald-500" />
-              <p className="text-emerald-600 text-xs font-semibold uppercase tracking-wider">Questions</p>
+              <p className="text-emerald-600 text-xs font-semibold uppercase tracking-wider">{t('dashboard.questionsTitle')}</p>
             </div>
             <p className="text-2xl font-extrabold text-emerald-900">{allQuestions.length}</p>
           </motion.div>
@@ -507,7 +511,7 @@ const ResponsesDashboard = () => {
           >
             <div className="flex items-center gap-2 mb-1">
               <Calendar size={14} className="text-amber-500" />
-              <p className="text-amber-600 text-xs font-semibold uppercase tracking-wider">Created</p>
+              <p className="text-amber-600 text-xs font-semibold uppercase tracking-wider">{t('dashboard.created')}</p>
             </div>
             <p className="text-sm font-bold text-amber-900">
               {new Date(form.createdAt).toLocaleDateString()}
@@ -519,12 +523,12 @@ const ResponsesDashboard = () => {
           >
             <div className="flex items-center gap-2 mb-1">
               <Clock size={14} className="text-violet-500" />
-              <p className="text-violet-600 text-xs font-semibold uppercase tracking-wider">Last Response</p>
+              <p className="text-violet-600 text-xs font-semibold uppercase tracking-wider">{t('dashboard.lastResponse')}</p>
             </div>
             <p className="text-sm font-bold text-violet-900">
               {responses.length > 0 
                 ? formatDistanceToNow(new Date(Math.max(...responses.map(r => new Date(r.createdAt).getTime()))), { addSuffix: true })
-                : 'Never'}
+                : t('dashboard.never')}
             </p>
           </motion.div>
         </motion.div>
@@ -550,9 +554,9 @@ const ResponsesDashboard = () => {
             }`}
           >
             {tab === 'summary' ? (
-              <span className="flex items-center gap-2"><TrendingUp size={14} /> Summary</span>
+              <span className="flex items-center gap-2"><TrendingUp size={14} /> {t('dashboard.summary')}</span>
             ) : (
-              <span className="flex items-center gap-2"><Users size={14} /> Individual</span>
+              <span className="flex items-center gap-2"><Users size={14} /> {t('dashboard.individual')}</span>
             )}
           </button>
         ))}
@@ -567,12 +571,12 @@ const ResponsesDashboard = () => {
           <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BarChart3 size={24} className="text-primary-400" />
           </div>
-          <p className="text-gray-500 mb-4 text-sm">No responses yet</p>
+          <p className="text-gray-500 mb-4 text-sm">{t('dashboard.noResponsesYet')}</p>
           <button
             onClick={() => navigate(`/form/${formId}`)}
             className="btn-primary text-sm"
           >
-            Fill Form
+            {t('dashboard.fillForm')}
           </button>
         </motion.div>
       ) : activeTab === 'summary' ? (
@@ -590,8 +594,8 @@ const ResponsesDashboard = () => {
             className="card bg-slate-900 rounded-xl shadow-sm border border-slate-800 overflow-hidden"
           >
             <div className="mb-4">
-              <h2 className="text-lg font-bold text-white leading-tight">Response Trend</h2>
-              <p className="text-xs text-slate-400 font-medium">Submissions over time</p>
+              <h2 className="text-lg font-bold text-white leading-tight">{t('dashboard.responseTrend')}</h2>
+              <p className="text-xs text-slate-400 font-medium">{t('dashboard.submissionsOverTime')}</p>
             </div>
             <div className="h-[250px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -673,7 +677,7 @@ const ResponsesDashboard = () => {
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="text-sm font-semibold text-gray-700">
-                    Response {currentResponseIndex + 1} of {responses.length}
+                    {t('dashboard.responseCurrentOfTotal', { current: currentResponseIndex + 1, total: responses.length })}
                   </span>
                 </div>
                 <button
@@ -691,7 +695,7 @@ const ResponsesDashboard = () => {
                   <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm backdrop-blur-sm">
                     {(() => {
                       const name = responses[currentResponseIndex].respondentName;
-                      const validName = name && name.toLowerCase() !== 'anonymous' ? name : `Respondent ${currentResponseIndex + 1}`;
+                      const validName = name && name.toLowerCase() !== 'anonymous' ? name : t('dashboard.respondentNum', { num: currentResponseIndex + 1 });
                       return validName.charAt(0).toUpperCase();
                     })()}
                   </div>
@@ -700,7 +704,7 @@ const ResponsesDashboard = () => {
                       <p className="text-base font-bold text-gray-900">
                         {(() => {
                           const name = responses[currentResponseIndex].respondentName;
-                          return name && name.toLowerCase() !== 'anonymous' ? name : `Respondent ${currentResponseIndex + 1}`;
+                          return name && name.toLowerCase() !== 'anonymous' ? name : t('dashboard.respondentNum', { num: currentResponseIndex + 1 });
                         })()}
                       </p>
                     </div>
@@ -725,7 +729,7 @@ const ResponsesDashboard = () => {
                         {(() => {
                           const val = answer?.value;
                           if (!val || (Array.isArray(val) && val.length === 0)) {
-                             return <span className="text-gray-400 italic">No answer</span>;
+                             return <span className="text-gray-400 italic">{t('dashboard.noAnswer')}</span>;
                           }
                           if (question.type === 'file_upload' && typeof val === 'string') {
                              const isImg = val.includes('/image/upload') || val.match(/\.(jpeg|jpg|gif|png|webp)$/i);
@@ -741,7 +745,7 @@ const ResponsesDashboard = () => {
                                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                                    </svg>
-                                   Open Full View
+                                   {t('dashboard.openFullView')}
                                  </button>
                                </div>
                              );

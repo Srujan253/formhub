@@ -47,10 +47,10 @@ const AdminPanel = () => {
     try {
       await api.patch(`/admin/users/${userId}/verify`);
       setUsers(users.map(u => u._id === userId ? { ...u, isVerified: true } : u));
-      setToast({ message: 'User verified successfully', type: 'success' });
+      setToast({ message: t('admin.userVerified'), type: 'success' });
       setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      setToast({ message: err.response?.data?.message || 'Error verifying user', type: 'error' });
+      setToast({ message: err.response?.data?.message || t('admin.errorVerifying'), type: 'error' });
       setTimeout(() => setToast(null), 3000);
     }
   };
@@ -62,7 +62,7 @@ const AdminPanel = () => {
       setToast({ message: `Role updated to ${newRole}`, type: 'success' });
       setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      setToast({ message: err.response?.data?.message || 'Error updating role', type: 'error' });
+      setToast({ message: err.response?.data?.message || t('admin.errorChangingRole'), type: 'error' });
       setTimeout(() => setToast(null), 3000);
     }
   };
@@ -73,10 +73,10 @@ const AdminPanel = () => {
       await api.delete(`/admin/users/${userToDelete}`);
       setUsers(users.filter(u => u._id !== userToDelete));
       setUserToDelete(null);
-      setToast({ message: 'User deleted successfully', type: 'success' });
+      setToast({ message: t('admin.userDeleted'), type: 'success' });
       setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      setToast({ message: err.response?.data?.message || 'Error deleting user', type: 'error' });
+      setToast({ message: err.response?.data?.message || t('admin.errorDeleting'), type: 'error' });
       setTimeout(() => setToast(null), 3000);
       setUserToDelete(null);
     }
@@ -125,7 +125,7 @@ const AdminPanel = () => {
                 <AlertCircle size={18} />
               </div>
               <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
-                Delete this user permanently?
+                {t('admin.deleteConfirm')}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -134,14 +134,14 @@ const AdminPanel = () => {
                 onClick={() => setUserToDelete(null)}
                 className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                No
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmDeleteUser}
                 className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
               >
-                Delete
+                {t('admin.delete')}
               </button>
             </div>
           </motion.div>
@@ -150,15 +150,15 @@ const AdminPanel = () => {
 
       <div className="mb-8 flex justify-between items-center sm:flex-row flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Command Center</h1>
-          <p className="text-gray-500 mt-2">Manage users, roles, and verifications.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{t('admin.commandCenter')}</h1>
+          <p className="text-gray-500 mt-2">{t('admin.commandCenterDesc')}</p>
         </div>
         <button
           onClick={() => setShowStaffModal(true)}
           className="btn-primary flex justify-center items-center gap-2"
         >
           <UserPlus size={18} />
-          {currentRole === 'admin' ? 'Create User' : 'Create Staff Account'}
+          {currentRole === 'admin' ? t('admin.createUser') : t('admin.createStaff')}
         </button>
       </div>
 
@@ -186,7 +186,7 @@ const AdminPanel = () => {
               className="fixed top-1/2 left-1/2 w-[90%] max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-xl z-50 p-6"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold font-manrope">{currentRole === 'admin' ? 'Create User' : 'Create Staff Account'}</h3>
+                <h3 className="text-xl font-bold font-manrope">{currentRole === 'admin' ? t('admin.createUser') : t('admin.createStaff')}</h3>
                 <button onClick={() => setShowStaffModal(false)} className="text-slate-400 hover:text-slate-600 transition">
                   <X size={20} />
                 </button>
@@ -194,7 +194,7 @@ const AdminPanel = () => {
 
               <form onSubmit={handleCreateStaff} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Name</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('admin.nameLabel')}</label>
                   <input
                     type="text"
                     required
@@ -205,7 +205,7 @@ const AdminPanel = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('admin.emailLabel')}</label>
                   <input
                     type="email"
                     required
@@ -216,7 +216,7 @@ const AdminPanel = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('admin.passwordLabel')}</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -237,15 +237,15 @@ const AdminPanel = () => {
                 </div>
                   {currentRole === 'admin' && (
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Role</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">{t('admin.selectRole')}</label>
                       <select
                         value={staffData.role}
                         onChange={(e) => setStaffData({ ...staffData, role: e.target.value })}
                         className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 outline-none transition"
                       >
-                        <option value="staff">Staff</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
+                        <option value="staff">{t('admin.staffRole')}</option>
+                        <option value="manager">{t('admin.managerRole')}</option>
+                        <option value="admin">{t('admin.adminRole')}</option>
                       </select>
                     </div>
                   )}
@@ -256,7 +256,7 @@ const AdminPanel = () => {
                     disabled={staffLoading}
                     className="w-full btn-primary py-3 rounded-xl disabled:opacity-50"
                   >
-                    {staffLoading ? 'Creating...' : 'Create Account'}
+                    {staffLoading ? t('common.loading') : t('admin.createUser')}
                   </button>
                 </div>
               </form>
@@ -292,14 +292,14 @@ const AdminPanel = () => {
                 </div>
                 {!user.isVerified && (
                   <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">
-                    Pending
+                    {t('admin.pendingStatus')}
                   </span>
                 )}
               </div>
 
               {user.about && (
                 <div className="mb-4 text-sm text-gray-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <p className="font-semibold text-slate-700 mb-1">About:</p>
+                  <p className="font-semibold text-slate-700 mb-1">{t('admin.aboutLabel')}</p>
                   <p className="line-clamp-2">{user.about}</p>
                 </div>
               )}
@@ -310,7 +310,7 @@ const AdminPanel = () => {
                     onClick={() => handleVerify(user._id)}
                     className="flex items-center justify-center gap-1 flex-1 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-medium rounded-xl transition-colors"
                   >
-                    <UserCheck size={16} /> Verify
+                    <UserCheck size={16} /> {t('admin.verify')}
                   </button>
                 )}
 
@@ -321,9 +321,9 @@ const AdminPanel = () => {
                        disabled={currentRole === 'manager' || user.email === 'ksrujan026@gmail.com'}
                        className="w-full bg-white/50 backdrop-blur-sm border border-slate-200 text-slate-700 text-sm rounded-xl py-2 px-3 appearance-none hover:bg-slate-50 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                      >
-                        <option value="staff">Staff</option>
-                        {currentRole === 'admin' && <option value="manager">Manager</option>}
-                        {currentRole === 'admin' && <option value="admin">Admin</option>}
+                        <option value="staff">{t('admin.staffRole')}</option>
+                        {currentRole === 'admin' && <option value="manager">{t('admin.managerRole')}</option>}
+                        {currentRole === 'admin' && <option value="admin">{t('admin.adminRole')}</option>}
                      </select>
                   </div>
 
@@ -341,7 +341,7 @@ const AdminPanel = () => {
 
         {users.length === 0 && !loading && (
           <div className="col-span-full py-12 text-center text-slate-500">
-            No users found.
+            {t('common.noData')}
           </div>
         )}
       </div>

@@ -83,7 +83,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
       }
     } catch (err) {
       console.error('Duplicate error:', err);
-      alert('Failed to duplicate form. Please try again.');
+      alert(t('home.duplicateError', { defaultValue: 'Failed to duplicate form. Please try again.' }));
     } finally {
       setDuplicating(false);
     }
@@ -112,7 +112,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
               className="absolute top-3 right-3 px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold
                          uppercase tracking-wider rounded-lg border border-amber-200/80 z-10"
             >
-              Paused
+              {t('home.paused', { defaultValue: 'Paused' })}
             </motion.div>
           )}
         </AnimatePresence>
@@ -167,7 +167,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
             onClick={canEditOrDelete ? handleToggleActive : (e) => e.stopPropagation()}
             disabled={toggling || !canEditOrDelete}
             className={`flex items-center gap-2 ${canEditOrDelete ? 'cursor-pointer group/toggle' : 'cursor-default'}`}
-            title={isActive ? 'Deactivate form' : 'Activate form'}
+            title={isActive ? t('home.deactivateForm') : t('home.activateForm')}
           >
             <div className={`relative w-10 h-[22px] rounded-full transition-all duration-400 ease-in-out ${
               isActive ? 'bg-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-gray-300'
@@ -196,7 +196,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
             onClick={(e) => { e.stopPropagation(); setShowInviteModal(true); }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-50/80 text-primary-600
                        hover:bg-primary-100 transition-all duration-300"
-            title="Invite via email"
+            title={t('home.inviteViaEmail')}
           >
             <Share2 size={14} />
           </motion.button>
@@ -211,7 +211,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
                        ${canEditOrDelete 
                          ? 'bg-amber-50/80 text-amber-500 hover:bg-amber-100 hover:text-amber-600' 
                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-            title="Duplicate form"
+            title={t('home.duplicateForm')}
           >
             {duplicating ? (
               <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
@@ -228,7 +228,7 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
               onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50/80 text-red-400
                          hover:bg-red-100 hover:text-red-600 transition-all duration-300"
-              title="Delete form"
+              title={t('home.deleteForm')}
             >
               <Trash2 size={14} />
             </motion.button>

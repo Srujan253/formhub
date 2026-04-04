@@ -182,7 +182,10 @@ const FormBuilder = () => {
   };
 
   const handleDeleteSection = (sIndex) => {
-    if (formData.sections.length <= 1) return;
+    if (formData.sections.length <= 1) {
+      setToast({ message: t('formBuilder.cannotDeleteLast', { defaultValue: 'Cannot delete last section' }), type: 'error' });
+      return;
+    }
     setSectionToDelete(sIndex);
   };
 
@@ -191,7 +194,7 @@ const FormBuilder = () => {
     const sections = formData.sections.filter((_, i) => i !== sectionToDelete);
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
-    setToast({ message: 'Section removed', type: 'success' });
+    setToast({ message: t('formBuilder.sectionRemoved', { defaultValue: 'Section removed' }), type: 'success' });
     setTimeout(() => setToast(null), 3000);
     if (activeSection >= sections.length) {
       setActiveSection(Math.max(0, sections.length - 1));
@@ -240,17 +243,18 @@ const FormBuilder = () => {
   const handleSaveForm = async (e) => {
     if (e) e.preventDefault();
     try {
-      if (!formData.title.trim()) {
-        setError('Form title is required');
+      const currentTitle = typeof formData.title === 'string' ? formData.title.replace(/<[^>]*>?/gm, '').trim() : '';
+      if (!currentTitle) {
+        setError(t('formBuilder.titleRequiredMsg', { defaultValue: 'Form title is required' }));
         return;
       }
       setSaving(true);
       if (id) {
         await formAPI.updateForm(id, formData);
-        setSuccess('Form updated successfully!');
+        setSuccess(t('formBuilder.formUpdated', { defaultValue: 'Form updated successfully!' }));
       } else {
         const response = await formAPI.createForm(formData);
-        setSuccess('Form created successfully!');
+        setSuccess(t('formBuilder.formCreated', { defaultValue: 'Form created successfully!' }));
         setHasUnsavedChanges(false);
         setTimeout(() => navigate(`/edit/${response.data.data._id}`), 1000);
       }
@@ -258,7 +262,7 @@ const FormBuilder = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
-      setError('Failed to save form');
+      setError(t('formBuilder.saveError', { defaultValue: 'Failed to save form' }));
     } finally {
       setSaving(false);
     }
@@ -301,7 +305,7 @@ const FormBuilder = () => {
                     <AlertCircle size={18} />
                   </div>
                   <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
-                    Close without saving? All changes will be lost.
+                    {t('formBuilder.closeWithoutSaving', { defaultValue: 'Close without saving? All changes will be lost.' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -310,7 +314,7 @@ const FormBuilder = () => {
                     onClick={() => setShowExitConfirm(false)}
                     className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                   >
-                    No
+                    {t('public.back', { defaultValue: 'No' })}
                   </button>
                   <button
                     type="button"
@@ -323,7 +327,7 @@ const FormBuilder = () => {
                     }}
                     className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20 rounded-lg transition-colors"
                   >
-                    Yes
+                    {t('public.submitButton', { defaultValue: 'Yes' })}
                   </button>
                 </div>
               </motion.div>
@@ -340,7 +344,7 @@ const FormBuilder = () => {
                     <AlertCircle size={18} />
                   </div>
                   <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
-                    Delete this section and all its questions?
+                    {t('formBuilder.confirmDeleteSection', { defaultValue: 'Delete this section and all its questions?' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -349,14 +353,14 @@ const FormBuilder = () => {
                     onClick={() => setSectionToDelete(null)}
                     className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                   >
-                    No
+                    {t('public.back', { defaultValue: 'No' })}
                   </button>
                   <button
                     type="button"
                     onClick={confirmDeleteSection}
                     className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
                   >
-                    Delete
+                    {t('admin.delete', { defaultValue: 'Delete' })}
                   </button>
                 </div>
               </motion.div>
@@ -427,7 +431,7 @@ const FormBuilder = () => {
                         rows="1"
                       />
                       <p className="text-xs text-red-500 mt-2 px-2">
-                        If you do not enter a title or description, it will not appear on the answer screen.
+                        {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
                       </p>
                     </div>
                     {formData.sections.length > 1 && (
@@ -482,7 +486,7 @@ const FormBuilder = () => {
               if (id) {
                 window.open(`/form/${id}`, '_blank');
               } else {
-                setToast({ message: 'Please save the form before previewing.', type: 'error' });
+                setToast({ message: t('formBuilder.saveBeforePreview', { defaultValue: 'Please save the form before previewing.' }), type: 'error' });
                 setTimeout(() => setToast(null), 3000);
               }
             } else {

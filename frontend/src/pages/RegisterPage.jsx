@@ -25,7 +25,12 @@ const RegisterPage = () => {
       await register(name, email, password, about);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register');
+      const msg = err.response?.data?.message;
+      if (msg === 'User already exists') {
+        setError(t('auth.userAlreadyExists'));
+      } else {
+        setError(msg || t('auth.failedToRegister'));
+      }
     } finally {
       setLoading(false);
     }

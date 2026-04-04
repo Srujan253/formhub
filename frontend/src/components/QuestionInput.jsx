@@ -74,15 +74,15 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
   const isLayoutBlock = question.type === 'layout_block';
 
   const questionTypes = [
-    { value: 'short_answer', label: 'Short Answer', icon: <Type size={18} className="text-primary-500 mr-3" /> },
-    { value: 'paragraph', label: 'Paragraph', icon: <AlignLeft size={18} className="text-primary-500 mr-3" /> },
-    { value: 'radio', label: 'Radio buttons', icon: <CircleDot size={18} className="text-primary-500 mr-3" /> },
-    { value: 'checkboxes', label: 'Checkboxes', icon: <CheckSquare size={18} className="text-primary-500 mr-3" /> },
-    { value: 'dropdown', label: 'Dropdown', icon: <ChevronDownCircle size={18} className="text-primary-500 mr-3" /> },
-    { value: 'linear_scale', label: 'Linear Scale', icon: <Sliders size={18} className="text-primary-500 mr-3" /> },
-    { value: 'grid_choice', label: 'Multiple Choice Grid', icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
-    { value: 'grid_checkbox', label: 'Checkbox Grid', icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
-    { value: 'file_upload', label: 'File Upload', icon: <CloudUpload size={18} className="text-primary-500 mr-3" /> },
+    { value: 'short_answer', label: t('formBuilder.types.short_answer', { defaultValue: 'Short Answer' }), icon: <Type size={18} className="text-primary-500 mr-3" /> },
+    { value: 'paragraph', label: t('formBuilder.types.paragraph', { defaultValue: 'Paragraph' }), icon: <AlignLeft size={18} className="text-primary-500 mr-3" /> },
+    { value: 'radio', label: t('formBuilder.types.radio', { defaultValue: 'Radio buttons' }), icon: <CircleDot size={18} className="text-primary-500 mr-3" /> },
+    { value: 'checkboxes', label: t('formBuilder.types.checkboxes', { defaultValue: 'Checkboxes' }), icon: <CheckSquare size={18} className="text-primary-500 mr-3" /> },
+    { value: 'dropdown', label: t('formBuilder.types.dropdown', { defaultValue: 'Dropdown' }), icon: <ChevronDownCircle size={18} className="text-primary-500 mr-3" /> },
+    { value: 'linear_scale', label: t('formBuilder.types.linear_scale', { defaultValue: 'Linear Scale' }), icon: <Sliders size={18} className="text-primary-500 mr-3" /> },
+    { value: 'grid_choice', label: t('formBuilder.types.grid_choice', { defaultValue: 'Multiple Choice Grid' }), icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
+    { value: 'grid_checkbox', label: t('formBuilder.types.grid_checkbox', { defaultValue: 'Checkbox Grid' }), icon: <Grid3X3 size={18} className="text-primary-500 mr-3" /> },
+    { value: 'file_upload', label: t('formBuilder.types.file_upload', { defaultValue: 'File Upload' }), icon: <CloudUpload size={18} className="text-primary-500 mr-3" /> },
   ];
 
   const currentType = questionTypes.find(t => t.value === question.type) || questionTypes[0];
@@ -143,7 +143,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
 
           {isLayoutBlock && question.layoutType === 'image' ? (
              <div className="mt-4">
-               <ImageUpload value={question.imageUrl || question.mediaUrl} onChange={(url) => { onChange({ ...question, mediaUrl: url, mediaType: 'image' }); if(onUploadSuccess) onUploadSuccess(); }} label="Upload Main Image" />
+               <ImageUpload value={question.imageUrl || question.mediaUrl} onChange={(url) => { onChange({ ...question, mediaUrl: url, mediaType: 'image' }); if(onUploadSuccess) onUploadSuccess(); }} label={t('formBuilder.uploadMainImage', { defaultValue: 'Upload Main Image' })} />
              </div>
           ) : (
             question.mediaUrl && !isLayoutBlock && (

@@ -22,7 +22,12 @@ const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to login');
+      const msg = err.response?.data?.message;
+      if (msg === 'Invalid credentials') {
+        setError(t('auth.failedToLogin'));
+      } else {
+        setError(msg || t('auth.failedToLogin'));
+      }
     } finally {
       setLoading(false);
     }

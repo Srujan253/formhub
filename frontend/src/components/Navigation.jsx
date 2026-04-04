@@ -93,7 +93,7 @@ const Navigation = () => {
                 {(user.role === 'admin' || user.role === 'manager') && (
                     <Link to="/admin" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm !text-indigo-600 !bg-indigo-50 hover:!bg-indigo-100 !border-indigo-100">
                     <ShieldAlert size={16} />
-                    <span className="hidden sm:inline">Settings</span>
+                    <span className="hidden sm:inline">{t('header.adminPanel')}</span>
                   </Link>
                 )}
                 <Link to="/" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm">

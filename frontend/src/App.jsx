@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import FormBuilder from './pages/FormBuilder';
@@ -46,6 +47,12 @@ const AppContent = () => {
 };
 
 function App() {
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    document.title = t('appName') + " — " + t('appSubtitle', 'Modern Form Builder');
+  }, [t, i18n.language]);
+
   return (
     <AuthProvider>
       <Router>

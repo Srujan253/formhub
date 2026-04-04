@@ -8,6 +8,7 @@ import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
 const FileModal = ({ url, onClose }) => {
+  const { t } = useTranslation();
   if (!url) return null;
   const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
   
@@ -20,14 +21,14 @@ const FileModal = ({ url, onClose }) => {
         className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col"
       >
          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-           <h3 className="font-semibold text-gray-800">File Preview</h3>
+           <h3 className="font-semibold text-gray-800">{t('public.filePreview')}</h3>
            <div className="flex items-center gap-2">
              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                  <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                </svg>
-               Open Tab
+               {t('public.openTab')}
              </a>
              <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -41,13 +42,13 @@ const FileModal = ({ url, onClose }) => {
              <img src={url} alt="Preview" className="max-w-full max-h-[calc(90vh-100px)] object-contain rounded drop-shadow-sm" />
            ) : (
              url.endsWith('.pdf') ? (
-               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title="PDF Preview" />
+               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title={t('public.filePreview')} />
              ) : (
                <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                 <p className="text-gray-600 font-medium mb-3">No preview available for this file type.</p>
+                 <p className="text-gray-600 font-medium mb-3">{t('public.noPreview')}</p>
                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-                   Download / Open File
+                   {t('public.downloadOpen')}
                  </a>
                </div>
              )
@@ -94,9 +95,9 @@ const PublicFormView = () => {
       setError('');
     } catch (err) {
       if (err.response?.status === 403) {
-        setError('This form is currently paused and not accepting responses.');
+        setError(t('public.formPaused'));
       } else {
-        setError('This form is not available or the link may be incorrect.');
+        setError(t('public.formNotAvailable'));
       }
     } finally {
       setLoading(false);
@@ -152,7 +153,7 @@ const PublicFormView = () => {
       setCurrentSectionIndex(prev => Math.min(prev + 1, form.sections.length - 1));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setError('Please fill in all required fields in this section.');
+      setError(t('public.fillRequiredSection'));
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -177,7 +178,7 @@ const PublicFormView = () => {
     }
 
     if (!validateAll()) {
-      setError('Please fill in all required fields.');
+      setError(t('public.fillRequired'));
       return;
     }
 
@@ -204,7 +205,7 @@ const PublicFormView = () => {
       setError('');
       setCurrentSectionIndex(0);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit your response. Please try again.');
+      setError(err.response?.data?.message || t('public.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -215,7 +216,7 @@ const PublicFormView = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50">
         <div className="text-center">
           <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600 animate-spin inline-block"></div>
-          <p className="text-gray-400 mt-4 text-sm font-medium">Loading form...</p>
+          <p className="text-gray-400 mt-4 text-sm font-medium">{t('public.loadingForm')}</p>
         </div>
       </div>
     );
@@ -226,7 +227,7 @@ const PublicFormView = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50 px-4">
         <div className="card text-center py-16 max-w-md w-full">
           <AlertCircle size={28} className="text-red-400 mx-auto mb-5" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Form Unavailable</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('public.formUnavailable')}</h2>
           <p className="text-gray-500 text-sm">{error}</p>
         </div>
       </div>
@@ -242,7 +243,7 @@ const PublicFormView = () => {
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('public.thankYou')}</h2>
           <p className="text-gray-500 text-sm mb-6">{t('public.success')}</p>
-          <button onClick={() => { setSuccess(false); setAnswers({}); }} className="btn-secondary text-sm">Submit Another</button>
+          <button onClick={() => { setSuccess(false); setAnswers({}); }} className="btn-secondary text-sm">{t('public.submitAnother')}</button>
         </motion.div>
       </div>
     );
@@ -262,11 +263,11 @@ const PublicFormView = () => {
             <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-sm shadow-primary-500/25">
               <Sparkles size={13} className="text-white" />
             </div>
-            <span className="text-sm font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">Pulse</span>
+            <span className="text-sm font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">{t('appName', { defaultValue: 'Pulse' })}</span>
           </div>
           {isMultiSection && (
              <div className="text-xs font-semibold text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
-               Page {currentSectionIndex + 1} of {form.sections.length}
+               {t('public.pageOf', { current: currentSectionIndex + 1, total: form.sections.length })}
              </div>
           )}
         </div>
@@ -288,9 +289,9 @@ const PublicFormView = () => {
             />
           )}
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-            <span>{totalQuestions} question{totalQuestions !== 1 ? 's' : ''}</span>
+            <span>{t('public.questionCount', { count: totalQuestions })}</span>
             <span>•</span>
-            <span>Fields marked with <span className="text-red-400">*</span> are required</span>
+            <span>{t('public.requiredField')}</span>
           </div>
         </div>
 
@@ -344,7 +345,7 @@ const PublicFormView = () => {
                  onClick={handleBack}
                  className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all"
                >
-                 <ChevronLeft size={18} /> Back
+                 <ChevronLeft size={18} /> {t('public.back')}
                </button>
             ) : (
               <div></div>
@@ -356,7 +357,7 @@ const PublicFormView = () => {
                  onClick={handleNext}
                  className="px-8 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-md shadow-primary-500/25 transition-all"
                >
-                 Next <ChevronRight size={18} />
+                 {t('public.next')} <ChevronRight size={18} />
                </button>
             ) : (
                <button
@@ -375,7 +376,7 @@ const PublicFormView = () => {
                    </>
                  ) : (
                    <>
-                     <Send size={18} /> Submit
+                     <Send size={18} /> {t('public.submitButton')}
                    </>
                  )}
                </button>
@@ -385,7 +386,7 @@ const PublicFormView = () => {
 
         <div className="text-center pb-4 mt-8 pt-8 border-t border-gray-200/50">
           <p className="text-xs text-gray-400">
-            Powered by <span className="font-semibold text-primary-500">Pulse</span>
+            {t('public.poweredBy')} <span className="font-semibold text-primary-500">{t('appName', { defaultValue: 'Pulse' })}</span>
           </p>
         </div>
       </div>
