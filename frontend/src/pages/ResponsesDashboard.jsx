@@ -42,8 +42,12 @@ const QuestionSimpleVisual = ({ question, responses }) => {
       if (val) {
         const vals = Array.isArray(val) ? val : [val];
         vals.forEach(v => {
-          if (counts[v] !== undefined) counts[v]++;
-          else counts[v] = 1;
+          if (counts[v] !== undefined) {
+            counts[v]++;
+          } else {
+            if (counts['Others']) counts['Others']++;
+            else counts['Others'] = 1;
+          }
         });
       }
     });
@@ -51,7 +55,7 @@ const QuestionSimpleVisual = ({ question, responses }) => {
     if (isRadio) {
       const chartData = Object.entries(counts)
         .map(([name, value]) => ({ name, value }))
-        .filter(d => options.includes(d.name) || d.value > 0);
+        .filter(d => options.includes(d.name) || d.name === 'Others' || d.value > 0);
 
       return (
         <div className="mt-4">
@@ -114,7 +118,7 @@ const QuestionSimpleVisual = ({ question, responses }) => {
           fullName: name, 
           value 
         }))
-        .filter(d => options.includes(d.fullName) || d.value > 0);
+        .filter(d => options.includes(d.fullName) || d.fullName === 'Others' || d.value > 0);
 
       return (
         <div className="mt-4">
@@ -280,7 +284,7 @@ const ResponsesDashboard = () => {
       }),
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -351,11 +355,11 @@ const ResponsesDashboard = () => {
         className="card mb-6 border-t-4 border-primary-500"
       >
         {form.headerImage && (
-          <div className="w-full h-32 md:h-48 mb-6 rounded-2xl overflow-hidden shadow-glass border border-gray-100">
+          <div className="flex-shrink-0 w-32 h-20 md:w-48 md:h-28 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50/50 flex items-center justify-center">
             <img 
               src={form.headerImage} 
               alt="Form Header" 
-              className="w-full h-full object-cover" 
+              className="max-w-full max-h-full object-contain" 
             />
           </div>
         )}

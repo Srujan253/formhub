@@ -224,8 +224,8 @@ const PublicFormView = () => {
             and section title as a separate card below it. */}
         <div className="card mb-6 border-t-4 border-primary-500">
           {form.headerImage && (
-            <div className="w-full h-48 md:h-64 mb-6 rounded-2xl overflow-hidden shadow-glass border border-gray-100">
-              <img src={form.headerImage} alt="Header" className="w-full h-full object-cover" />
+            <div className="w-full h-48 md:h-64 mb-6 rounded-2xl overflow-hidden shadow-glass border border-gray-100 bg-gray-50/50 flex items-center justify-center">
+              <img src={form.headerImage} alt="Header" className="max-w-full max-h-full object-contain" />
             </div>
           )}
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{form.title}</h1>
@@ -243,15 +243,15 @@ const PublicFormView = () => {
         </div>
 
         {/* Section Header if it's multi-section and has title */}
-        {isMultiSection && (currentSection.title || currentSection.description) && (
+        {isMultiSection && (currentSection.title?.trim() || currentSection.description?.trim()) && (
           <motion.div
             key={`header-${currentSectionIndex}`}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="card mb-6 bg-primary-50/30 border border-primary-100/50"
           >
-             {currentSection.title && <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.title}</h2>}
-             {currentSection.description && <p className="text-gray-500 text-sm">{currentSection.description}</p>}
+             {currentSection.title?.trim() && <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.title}</h2>}
+             {currentSection.description?.trim() && <p className="text-gray-500 text-sm">{currentSection.description}</p>}
           </motion.div>
         )}
 

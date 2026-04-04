@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Upload } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
 const QuestionPreview = ({ question, answer, onChange, errors }) => {
@@ -62,10 +63,39 @@ const QuestionPreview = ({ question, answer, onChange, errors }) => {
         />
       )}
 
+      {/* Render media attached to layout blocks */}
       {isLayoutBlock && question.layoutType === 'image' && question.mediaUrl && (
          <div className="mt-4">
            <img src={question.mediaUrl} alt="Layout" className="w-full h-auto rounded-2xl mx-auto" />
          </div>
+      )}
+
+      {/* Render media attached to normal questions */}
+      {!isLayoutBlock && question.mediaUrl && (
+        <div className="mt-4 mb-4">
+          {question.mediaType === 'pdf' ? (
+            <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl max-w-fit">
+              <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex flex-col pr-8">
+                <span className="text-sm font-semibold text-gray-700">Attached Document</span>
+                <a 
+                  href={question.mediaUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-xs text-primary-500 hover:text-primary-600 hover:underline flex items-center gap-1 mt-0.5"
+                >
+                  View Details
+                </a>
+              </div>
+            </div>
+          ) : (
+            <img src={question.mediaUrl} alt="Question Attachment" className="max-w-full h-auto max-h-[400px] object-contain rounded-xl border border-gray-100" />
+          )}
+        </div>
       )}
 
       {question.type === 'short_answer' && (

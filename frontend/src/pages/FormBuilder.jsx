@@ -62,7 +62,7 @@ const FormBuilder = () => {
     description: '',
     headerImage: '',
     sections: [
-      { id: uuidv4(), title: 'Section 1', description: '', items: [] }
+      { id: uuidv4(), title: '', description: '', items: [] }
     ],
   });
   const [activeSection, setActiveSection] = useState(0);
@@ -77,6 +77,7 @@ const FormBuilder = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [sectionToDelete, setSectionToDelete] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -122,7 +123,7 @@ const FormBuilder = () => {
         data.sections = [
           {
              id: uuidv4(),
-             title: 'Section 1',
+             title: '',
              description: '',
              items: data.questions || []
           }
@@ -171,7 +172,7 @@ const FormBuilder = () => {
   const handleAddSection = () => {
     const newSection = {
       id: uuidv4(),
-      title: `Section ${formData.sections.length + 1}`,
+      title: '',
       description: '',
       items: [],
     };
@@ -182,10 +183,12 @@ const FormBuilder = () => {
 
   const handleDeleteSection = (sIndex) => {
     if (formData.sections.length <= 1) return;
-    if (!window.confirm("Are you sure you want to delete this section and all its questions?")) {
-      return;
-    }
-    const sections = formData.sections.filter((_, i) => i !== sIndex);
+    setSectionToDelete(sIndex);
+  };
+
+  const confirmDeleteSection = () => {
+    if (sectionToDelete === null) return;
+    const sections = formData.sections.filter((_, i) => i !== sectionToDelete);
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
     setToast({ message: 'Section removed', type: 'success' });
@@ -193,6 +196,7 @@ const FormBuilder = () => {
     if (activeSection >= sections.length) {
       setActiveSection(Math.max(0, sections.length - 1));
     }
+    setSectionToDelete(null);
   };
 
   const handleItemChange = (sIndex, iIndex, updatedItem) => {
@@ -324,7 +328,39 @@ const FormBuilder = () => {
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
+            {sectionToDelete !== null && (
+              <motion.div
+                initial={{ opacity: 0, y: -20, x: '-50%' }}
+                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, y: -20, x: '-50%' }}
+                className="fixed top-8 left-1/2 z-[200] flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md min-w-[320px] max-w-[90vw] bg-white border-red-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                    <AlertCircle size={18} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
+                    Delete this section and all its questions?
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSectionToDelete(null)}
+                    className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDeleteSection}
+                    className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            )}          </AnimatePresence>
         <div className="flex items-center justify-between mb-6">
             <motion.button onClick={() => {
               if (hasUnsavedChanges) {
@@ -390,6 +426,9 @@ const FormBuilder = () => {
                         className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
                         rows="1"
                       />
+                      <p className="text-xs text-red-500 mt-2 px-2">
+                        If you do not enter a title or description, it will not appear on the answer screen.
+                      </p>
                     </div>
                     {formData.sections.length > 1 && (
                        <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>

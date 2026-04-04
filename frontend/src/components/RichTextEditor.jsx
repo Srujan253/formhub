@@ -14,19 +14,9 @@ import {
   RemoveFormatting 
 } from 'lucide-react';
 
-const CustomEnterOption = Extension.create({
-  name: 'customEnterOption',
-  addKeyboardShortcuts() {
-    return {
-      Enter: () => this.editor.commands.setHardBreak(),
-    };
-  },
-});
-
 const RichTextEditor = ({ content, onChange, placeholder }) => {
   const editor = useEditor({
     extensions: [
-      CustomEnterOption,
       StarterKit.configure({
         heading: false, // disable headings to keep it simple for descriptions
         codeBlock: false,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { BarChart3, Share2, Edit3, Calendar, HelpCircle, QrCode, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { BarChart3, Share2, Edit3, Calendar, HelpCircle, QrCode, Trash2, Copy } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,8 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
   const [toggling, setToggling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const navigate = useNavigate();
   
   const currentRole = useAuthStore((state) => state.role);
   const canEditOrDelete = currentRole !== 'staff';
@@ -61,6 +63,32 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
     }
   };
 
+  const handleDuplicate = async (e) => {
+    e.stopPropagation();
+    if (duplicating) return;
+    try {
+      setDuplicating(true);
+      const res = await formAPI.createForm({
+        title: `${form.title} (Copy)`,
+        description: form.description,
+        headerImage: form.headerImage,
+        mediaUrl: form.mediaUrl,
+        mediaType: form.mediaType,
+        questions: form.questions,
+        sections: form.sections,
+      });
+      if (res.data?.success && res.data?.data && onFormUpdate) {
+        // Pass new form back up to the list
+        onFormUpdate(res.data.data);
+      }
+    } catch (err) {
+      console.error('Duplicate error:', err);
+      alert('Failed to duplicate form. Please try again.');
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -91,11 +119,11 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
 
         {/* Banner image if present */}
         {form.headerImage && (
-          <div className="h-24 w-full mb-4 -mt-2 rounded-xl overflow-hidden border border-gray-100/50 shadow-inner">
+          <div className="h-24 w-full mb-4 -mt-2 rounded-xl overflow-hidden border border-gray-100/50 shadow-inner bg-gray-50/50 flex items-center justify-center">
             <img 
               src={form.headerImage} 
               alt={form.title} 
-              className="w-full h-full object-cover"
+              className="max-w-full max-h-full object-contain"
             />
           </div>
         )}
@@ -171,6 +199,25 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
             title="Invite via email"
           >
             <Share2 size={14} />
+          </motion.button>
+          
+          {/* Duplicate button */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={canEditOrDelete ? handleDuplicate : (e) => e.stopPropagation()}
+            disabled={duplicating || !canEditOrDelete}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 
+                       ${canEditOrDelete 
+                         ? 'bg-amber-50/80 text-amber-500 hover:bg-amber-100 hover:text-amber-600' 
+                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+            title="Duplicate form"
+          >
+            {duplicating ? (
+              <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+            ) : (
+              <Copy size={14} />
+            )}
           </motion.button>
 
           {/* Delete button */}

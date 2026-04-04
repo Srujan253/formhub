@@ -16,7 +16,7 @@ export const createForm = async (req, res) => {
       headerImage,
       mediaUrl,
       mediaType,
-      sections: sections || (questions ? [{ id: 'default', items: questions }] : []),
+      sections: sections || (questions ? [{ id: 'default', title: '', items: questions }] : []),
       createdBy: req.user ? req.user._id : 'anonymous',
       shareToken: crypto.randomBytes(16).toString('hex'),
     });
@@ -76,7 +76,7 @@ export const updateForm = async (req, res) => {
     const { id } = req.params;
     const { title, description, headerImage, mediaUrl, mediaType, sections, questions, isActive } = req.body;
 
-    const sectionsToUpdate = sections || (questions ? [{ id: 'default', title: 'Section 1', items: questions }] : undefined);
+    const sectionsToUpdate = sections || (questions ? [{ id: 'default', title: '', items: questions }] : undefined);
 
     const updatedForm = await Form.findByIdAndUpdate(
       id,

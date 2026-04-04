@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserCheck, UserX, Shield, ShieldAlert, UserPlus, X, Eye, EyeOff } from 'lucide-react';
+import { UserCheck, UserX, Shield, ShieldAlert, UserPlus, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
+import Toast from '../components/Toast';
 
 const AdminPanel = () => {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
   const [showStaffModal, setShowStaffModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [staffData, setStaffData] = useState({ name: '', email: '', password: '', role: 'staff' });
   const [staffLoading, setStaffLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,8 +47,11 @@ const AdminPanel = () => {
     try {
       await api.patch(`/admin/users/${userId}/verify`);
       setUsers(users.map(u => u._id === userId ? { ...u, isVerified: true } : u));
+      setToast({ message: 'User verified successfully', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      alert('Error verifying user');
+      setToast({ message: err.response?.data?.message || 'Error verifying user', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -53,19 +59,26 @@ const AdminPanel = () => {
     try {
       await api.patch(`/admin/users/${userId}/role`, { role: newRole });
       setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
+      setToast({ message: `Role updated to ${newRole}`, type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error updating role');
+      setToast({ message: err.response?.data?.message || 'Error updating role', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
     try {
-      await api.delete(`/admin/users/${userId}`);
-      setUsers(users.filter(u => u._id !== userId));
+      await api.delete(`/admin/users/${userToDelete}`);
+      setUsers(users.filter(u => u._id !== userToDelete));
+      setUserToDelete(null);
+      setToast({ message: 'User deleted successfully', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error deleting user');
+      setToast({ message: err.response?.data?.message || 'Error deleting user', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
+      setUserToDelete(null);
     }
   };
 
@@ -77,8 +90,11 @@ const AdminPanel = () => {
       setUsers([data, ...users]); // add new user to front of list
       setShowStaffModal(false);
       setStaffData({ name: '', email: '', password: '', role: 'staff' });
+      setToast({ message: 'Staff account created successfully', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error creating staff user');
+      setToast({ message: err.response?.data?.message || 'Error creating staff user', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     } finally {
       setStaffLoading(false);
     }
@@ -94,6 +110,44 @@ const AdminPanel = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 relative">
+      <AnimatePresence>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        
+        {userToDelete && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="fixed top-8 left-1/2 z-[200] flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md min-w-[320px] max-w-[90vw] bg-white border-red-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                <AlertCircle size={18} />
+              </div>
+              <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
+                Delete this user permanently?
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteUser}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="mb-8 flex justify-between items-center sm:flex-row flex-col gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Command Center</h1>
@@ -274,7 +328,7 @@ const AdminPanel = () => {
                   </div>
 
                   <button
-                    onClick={() => handleDelete(user._id)}
+                    onClick={() => setUserToDelete(user._id)}
                     disabled={currentRole === 'manager' || user.email === 'ksrujan026@gmail.com'}
                     className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >

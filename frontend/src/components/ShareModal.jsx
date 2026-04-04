@@ -42,7 +42,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
             className="bg-white/90 backdrop-blur-xl rounded-3xl border border-gray-100/80 shadow-lumina-xl
-                       w-full max-w-md overflow-hidden"
+                       w-full max-w-md max-h-[95vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="px-6 pt-6 pb-4 border-b border-gray-100/80 flex justify-between items-start">
