@@ -152,7 +152,7 @@ const PublicFormView = () => {
       setError('');
       setCurrentSectionIndex(0);
     } catch (err) {
-      setError('Failed to submit your response. Please try again.');
+      setError(err.response?.data?.message || 'Failed to submit your response. Please try again.');
     } finally {
       setSubmitting(false);
     }

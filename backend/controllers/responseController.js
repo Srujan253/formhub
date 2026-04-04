@@ -33,10 +33,6 @@ export const submitPublicResponse = async (req, res) => {
       return res.status(400).json({ message: 'Share token and answers are required' });
     }
 
-    if (!respondentName || respondentName.trim() === '') {
-      return res.status(400).json({ message: 'Please enter your name before submitting' });
-    }
-
     const form = await Form.findOne({ shareToken, isActive: true });
     if (!form) {
       return res.status(404).json({ message: 'Form not found or is no longer accepting responses' });
@@ -45,7 +41,7 @@ export const submitPublicResponse = async (req, res) => {
     const newResponse = new Response({
       formId: form._id,
       answers,
-      respondentName: respondentName.trim(),
+      respondentName: respondentName ? respondentName.trim() : 'Anonymous',
       respondentEmail: respondentEmail || '',
     });
 
