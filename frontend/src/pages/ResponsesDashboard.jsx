@@ -268,7 +268,17 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
                     </button>
                   )
                 ) : (
-                  ans
+                  typeof ans === 'object' && ans !== null ? (
+                    <div className="flex flex-col gap-1">
+                      {Object.entries(ans).map(([k, v]) => (
+                        <div key={k} className="text-xs">
+                          <span className="font-semibold">{k}:</span> {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    ans
+                  )
                 )}
               </motion.div>
             );
@@ -750,7 +760,18 @@ const ResponsesDashboard = () => {
                                </div>
                              );
                           }
-                          return Array.isArray(val) ? val.join(', ') : val;
+                          if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+                            return (
+                              <div className="flex flex-col gap-1">
+                                {Object.entries(val).map(([k, v]) => (
+                                  <div key={k} className="text-sm">
+                                    <span className="font-semibold">{k}:</span> {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return Array.isArray(val) ? val.join(', ') : String(val);
                         })()}
                       </div>
                     </div>
