@@ -383,10 +383,39 @@ const ResponsesDashboard = () => {
 
     const escapeCSV = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
 
-    const headers = ['Respondent Name', 'Date', 'Time', ...allQuestions.map((q) => {
-      const doc = new DOMParser().parseFromString(q.title, 'text/html');
-      return doc.body.textContent || q.title || "";
-    })];
+    const headers = ['Respondent Name', 'Date', 'Time'];
+    const flatQuestions = [];
+    
+const extractText = (html) => {
+      if (!html) return '';
+      try {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const text = doc.body.textContent;
+        if (text && text.trim() !== '') return text.trim();
+      } catch (e) {}
+      return html.replace(/<[^>]*>?/gm, '').trim();
+    };
+
+    allQuestions.forEach((q) => {
+      let qTitle = extractText(q.title) || 'Untitled Question';
+
+      if (q.type === 'grid_choice' || q.type === 'grid_checkbox') {
+        if (q.rows && Array.isArray(q.rows) && q.rows.length > 0) {
+          q.rows.forEach((rowName) => {
+            const cleanRowName = extractText(rowName) || 'Untitled Row';
+            headers.push(`${qTitle} [${cleanRowName}]`);
+            flatQuestions.push({ id: q.id, type: q.type, isGrid: true, rawRowName: rowName, cleanRowName: cleanRowName });
+          });
+        } else {
+          headers.push(qTitle);
+          flatQuestions.push({ id: q.id, type: q.type, isGrid: false });
+        }
+      } else {
+        headers.push(qTitle);
+        flatQuestions.push({ id: q.id, type: q.type, isGrid: false });
+      }
+    });
+
     const csvContent = [
       headers.map(escapeCSV).join(','),
       ...responses.map((response, index) => {
@@ -396,13 +425,21 @@ const ResponsesDashboard = () => {
           escapeCSV(dt.toLocaleDateString()),
           escapeCSV(dt.toLocaleTimeString()),
         ];
-        allQuestions.forEach((question) => {
+
+        flatQuestions.forEach((fq) => {
           const answer = response.answers.find(
-            (a) => a.questionId === question.id
+            (a) => a.questionId === fq.id
           );
-          const val = answer?.value;
+          let val = answer?.value;
+
+          if (fq.isGrid && val && typeof val === 'object' && !Array.isArray(val)) {
+            // First try cleanRowName, then rawRowName
+            val = val[fq.cleanRowName] !== undefined ? val[fq.cleanRowName] : val[fq.rawRowName];
+          }
+          
           row.push(escapeCSV(Array.isArray(val) ? val.join(', ') : (val || '')));
         });
+        
         return row.join(',');
       }),
     ].join('\n');

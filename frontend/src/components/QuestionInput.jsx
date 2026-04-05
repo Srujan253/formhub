@@ -299,12 +299,33 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                   <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-50 text-primary-600 text-xs font-bold flex-shrink-0">
                     {index + 1}
                   </span>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={1}
                     value={option.text}
-                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                    onChange={(e) => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                      handleOptionChange(index, e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const target = e.target;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue = target.value.substring(0, start) + '\n' + target.value.substring(end);
+                        
+                        handleOptionChange(index, newValue);
+                        // Reset cursor location
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd = start + 1;
+                          target.style.height = 'auto';
+                          target.style.height = target.scrollHeight + 'px';
+                        }, 0);
+                      }
+                    }}
                     placeholder={`Option ${index + 1}`}
-                    className="form-input"
+                    className="form-input resize-none overflow-hidden min-h-[48px] py-3"
                   />
                 </div>
                 <motion.button

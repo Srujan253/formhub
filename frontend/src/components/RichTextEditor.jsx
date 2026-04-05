@@ -20,8 +20,14 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
       StarterKit.configure({
         heading: false, // disable headings to keep it simple for descriptions
         codeBlock: false,
-      }),
-      Underline,
+      }),      Extension.create({
+        name: 'enterToHardBreak',
+        addKeyboardShortcuts() {
+          return {
+            Enter: () => this.editor.commands.setHardBreak(),
+          }
+        },
+      }),      Underline,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
