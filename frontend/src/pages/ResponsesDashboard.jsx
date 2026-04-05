@@ -15,7 +15,30 @@ const FileModal = ({ url, onClose }) => {
   const { t } = useTranslation();
   if (!url) return null;
   const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
-  
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = downloadUrl;
+      const filename = url.split('/').pop().split('?')[0] || 'download';
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // Fallback
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 pt-8">
       <motion.div 
@@ -27,6 +50,10 @@ const FileModal = ({ url, onClose }) => {
          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
            <h3 className="font-semibold text-gray-800">{t('dashboard.filePreview')}</h3>
            <div className="flex items-center gap-2">
+             <button onClick={handleDownload} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+               <Download className="w-4 h-4" />
+               {t('dashboard.downloadOpen')}
+             </button>
              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
@@ -51,9 +78,9 @@ const FileModal = ({ url, onClose }) => {
                <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                  <p className="text-gray-600 font-medium mb-3">{t('dashboard.noPreview')}</p>
-                 <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-                   {t('dashboard.downloadOpen')}
-                 </a>
+                   <button onClick={handleDownload} className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                     {t('dashboard.downloadOpen')}
+                   </button>
                </div>
              )
            )}
