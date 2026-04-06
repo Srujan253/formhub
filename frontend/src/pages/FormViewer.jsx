@@ -301,11 +301,11 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         {(form.sections && form.sections.length > 0 ? form.sections : [{ id: 'default', title: '', items: form.questions || [] }]).map((section, sIndex) => {
-          const isDefaultFirstSection = sIndex === 0 && form.sections.length <= 1 && (!section.title || section.title === 'Section 1' || !section.title.trim()) && !section.description?.trim();
+          const isSingleSection = (form.sections || []).length <= 1;
           
           return (
           <div key={section.id || sIndex} className="mb-8 space-y-4">
-            {!isDefaultFirstSection && (section.title?.trim() || section.description?.trim()) && (
+            {!isSingleSection && (section.title?.trim() || section.description?.trim()) && (
               <div className="mb-6 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 {section.title?.trim() && <h2 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-2">{section.title}</h2>}
                 {section.description?.trim() && <p className="text-gray-500 mt-2 text-sm">{section.description}</p>}

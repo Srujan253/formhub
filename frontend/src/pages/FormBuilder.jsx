@@ -191,7 +191,16 @@ const FormBuilder = () => {
 
   const confirmDeleteSection = () => {
     if (sectionToDelete === null) return;
-    const sections = formData.sections.filter((_, i) => i !== sectionToDelete);
+    const sections = [...formData.sections];
+    
+    if (sectionToDelete > 0) {
+      sections[sectionToDelete - 1].items.push(...sections[sectionToDelete].items);
+    } else if (sections.length > 1) {
+      sections[1].items.unshift(...sections[sectionToDelete].items);
+    }
+
+    sections.splice(sectionToDelete, 1);
+    
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
     setToast({ message: t('formBuilder.sectionRemoved', { defaultValue: 'Section removed' }), type: 'success' });
@@ -344,7 +353,7 @@ const FormBuilder = () => {
                     <AlertCircle size={18} />
                   </div>
                   <p className="text-sm font-semibold text-gray-800 leading-tight pb-0 mb-0">
-                    {t('formBuilder.confirmDeleteSection', { defaultValue: 'Delete this section and all its questions?' })}
+                    {t('formBuilder.confirmDeleteSection', { defaultValue: 'Delete this section? Questions will be moved to the adjacent section.' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -405,42 +414,42 @@ const FormBuilder = () => {
           {formData.sections.map((section, sIndex) => (
               <div key={section.id} className={`mb-10 relative ${activeSection === sIndex ? 'z-50' : 'z-10'}`} onClick={() => setActiveSection(sIndex)}>
 
-                <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1 mr-4">
-                      <textarea
-                        value={section.title}
-                        onChange={(e) => {
-                          e.target.style.height = 'inherit';
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                          handleSectionChange(sIndex, { title: e.target.value });
-                        }}
-                        placeholder={t('formBuilder.sectionTitle', { defaultValue: 'Section Title' })}
-                        className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
-                        rows="1"
-                      />
-                      <textarea
-                        value={section.description || ''}
-                        onChange={(e) => {
-                          e.target.style.height = 'inherit';
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                          handleSectionChange(sIndex, { description: e.target.value });
-                        }}
-                        placeholder={t('formBuilder.description', { defaultValue: 'Description (optional)' })}
-                        className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
-                        rows="1"
-                      />
-                      <p className="text-xs text-red-500 mt-2 px-2">
-                        {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
-                      </p>
+                { (sIndex > 0 || (sIndex === 0 && (section.title || section.description))) && (
+                  <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 mr-4">
+                        <textarea
+                          value={section.title}
+                          onChange={(e) => {
+                            e.target.style.height = 'inherit';
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                            handleSectionChange(sIndex, { title: e.target.value });
+                          }}
+                          placeholder={t('formBuilder.sectionTitle', { defaultValue: 'Section Title' })}
+                          className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
+                          rows="1"
+                        />
+                        <textarea
+                          value={section.description || ''}
+                          onChange={(e) => {
+                            e.target.style.height = 'inherit';
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                            handleSectionChange(sIndex, { description: e.target.value });
+                          }}
+                          placeholder={t('formBuilder.description', { defaultValue: 'Description (optional)' })}
+                          className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
+                          rows="1"
+                        />
+                        <p className="text-xs text-red-500 mt-2 px-2">
+                          {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
+                        <Trash2 size={18} />
+                      </button>
                     </div>
-                    {formData.sections.length > 1 && (
-                       <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
-                         <Trash2 size={18} />
-                       </button>
-                    )}
                   </div>
-                </div>
+                )}
 
               <Droppable droppableId={sIndex.toString()}>
                 {(provided, snapshot) => (

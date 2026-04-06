@@ -92,16 +92,18 @@ const FileModal = ({ url, onClose }) => {
 
 const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const isRadio = question.type === 'radio';
-  const isCheckbox = question.type === 'checkboxes';
+  const isSingleChoice = ['radio', 'multiple_choice', 'dropdown'].includes(question.type);
+  const isMultipleChoice = question.type === 'checkboxes';
+  const isGrid = ['grid_choice', 'grid_checkbox'].includes(question.type);
+  const isScale = ['linear_scale', 'rating', 'scale'].includes(question.type);
+  const isVisualType = isSingleChoice || isMultipleChoice || isGrid || isScale;
 
-  if (isRadio || isCheckbox) {
-    // TODO: map your response data shape here
+  if (isVisualType) {
     const answeredResponses = responses.filter(r => {
       const ans = r.answers?.find(a => a.questionId === question.id);
-      return ans && ans.value && (Array.isArray(ans.value) ? ans.value.length > 0 : String(ans.value).trim() !== '');
+      return ans && ans.value && (Array.isArray(ans.value) ? ans.value.length > 0 : (typeof ans.value === 'object' && ans.value !== null ? Object.keys(ans.value).length > 0 : String(ans.value).trim() !== ''));
     });
     const totalRespondents = answeredResponses.length;
 
@@ -114,26 +116,39 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
       );
     }
 
-    const options = question.options?.map(o => o.text) || [];
     const counts = {};
-    options.forEach(o => counts[o] = 0);
+    const options = question.options?.map(o => o.text) || [];
+    if (!isGrid) {
+      options.forEach(o => counts[o] = 0);
+    }
 
     answeredResponses.forEach(r => {
       const val = r.answers.find(a => a.questionId === question.id)?.value;
       if (val) {
-        const vals = Array.isArray(val) ? val : [val];
-        vals.forEach(v => {
-          if (counts[v] !== undefined) {
-            counts[v]++;
-          } else {
-            if (counts['Others']) counts['Others']++;
-            else counts['Others'] = 1;
-          }
-        });
+        if (isGrid) {
+          // Grid gives an object: { "Row 1": "Col 1", "Row 2": ["Col 1", "Col 2"] }
+          Object.entries(val).forEach(([row, ans]) => {
+            const vals = Array.isArray(ans) ? ans : [ans];
+            vals.forEach(v => {
+              const key = `${row} - ${v}`;
+              counts[key] = (counts[key] || 0) + 1;
+            });
+          });
+        } else {
+          const vals = Array.isArray(val) ? val : [val];
+          vals.forEach(v => {
+            if (counts[v] !== undefined) {
+              counts[v]++;
+            } else {
+              if (counts[v]) counts[v]++;
+              else counts[v] = 1;
+            }
+          });
+        }
       }
     });
 
-    if (isRadio) {
+    if (isSingleChoice && !isGrid && !isScale) {
       const chartData = Object.entries(counts)
         .map(([name, value]) => ({ name, value }))
         .filter(d => options.includes(d.name) || d.name === 'Others' || d.value > 0);
@@ -192,14 +207,18 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
         </div>
       );
     } else {
-      // CHECKBOXES
+      // CHECKBOXES, GRID, SCALE - use BarChart
       const sortedData = Object.entries(counts)
         .map(([name, value]) => ({ 
           name: truncateText(name, 24), 
           fullName: name, 
           value 
         }))
-        .filter(d => options.includes(d.fullName) || d.fullName === 'Others' || d.value > 0);
+        .filter(d => (isGrid ? true : options.includes(d.fullName)) || d.fullName === 'Others' || d.value > 0)
+        .sort((a, b) => {
+          if (isScale) return String(a.fullName).localeCompare(String(b.fullName), undefined, {numeric: true});
+          return b.value - a.value;
+        });
 
       return (
         <div className="mt-4">
@@ -241,6 +260,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
     }
   }
 
+  // Text / Comments / File Upload types
   const rawAnswers = useMemo(() => {
     return responses
       .map(r => r.answers.find(a => a.questionId === question.id)?.value)
@@ -254,71 +274,109 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
     );
   }
 
-  const displayAnswers = expanded ? rawAnswers : rawAnswers.slice(0, 8);
-  return (
-    <div>
-      <div className="flex flex-wrap gap-3">
-        <AnimatePresence>
-          {displayAnswers.map((ans, i) => {
-            const isFileUpload = question.type === 'file_upload';
-            const isImg = isFileUpload && typeof ans === 'string' && (ans.includes('/image/upload') || ans.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+  const isFileUpload = question.type === 'file_upload';
 
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className={`max-w-[200px] overflow-hidden text-ellipsis px-3 py-2 bg-gray-50 text-gray-700 text-sm rounded-xl border border-gray-200 shadow-sm ${isImg ? 'p-2' : ''}`}
-              >
-                {isFileUpload && typeof ans === 'string' && ans.startsWith('http') ? (
-                  isImg ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="w-full h-24 rounded-lg overflow-hidden border border-gray-100 bg-white cursor-pointer hover:ring-2 ring-primary-500/50 transition-all" onClick={() => onViewFile(ans)}>
-                        <img src={ans} alt="upload" className="w-full h-full object-cover" />
-                      </div>
-                      <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 text-xs font-semibold flex items-center justify-center gap-1 bg-white border border-gray-200 p-1.5 rounded shadow-sm hover:shadow hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                        </svg>
-                        {t('dashboard.quickView')}
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 underline break-all flex items-center gap-1 font-medium hover:bg-gray-50 px-2 py-1 -ml-2 rounded transition-colors w-full text-left">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="truncate">{t('dashboard.viewDocument')}</span>
-                    </button>
-                  )
-                ) : (
-                  typeof ans === 'object' && ans !== null ? (
-                    <div className="flex flex-col gap-1">
-                      {Object.entries(ans).map(([k, v]) => (
-                        <div key={k} className="text-xs">
-                          <span className="font-semibold">{k}:</span> {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    ans
-                  )
-                )}
+  const filteredAnswers = useMemo(() => {
+    if (!searchTerm) return rawAnswers;
+    const lowerSearch = searchTerm.toLowerCase();
+    return rawAnswers.filter(ans => {
+      if (typeof ans === 'string') return ans.toLowerCase().includes(lowerSearch);
+      if (typeof ans === 'object') return JSON.stringify(ans).toLowerCase().includes(lowerSearch);
+      return String(ans).toLowerCase().includes(lowerSearch);
+    });
+  }, [rawAnswers, searchTerm]);
+
+  return (
+    <div className="flex flex-col h-full max-h-[400px]">
+      {!isFileUpload && rawAnswers.length > 3 && (
+        <div className="mb-4 sticky top-0 bg-white z-10 pb-2">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder={t('dashboard.searchResponses', 'Search comments...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white focus:border-primary-500 sm:text-sm transition-colors"
+            />
+          </div>
+        </div>
+      )}
+      
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+        <div className={isFileUpload ? "flex flex-wrap gap-3" : "flex flex-col gap-3"}>
+          <AnimatePresence>
+            {filteredAnswers.length === 0 ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-gray-500 italic py-4 text-center">
+                {t('dashboard.noMatchingResults', 'No matching responses found.')}
               </motion.div>
-            );
-          })}
-        </AnimatePresence>
+            ) : (
+              filteredAnswers.map((ans, i) => {
+                const isImg = isFileUpload && typeof ans === 'string' && (ans.includes('/image/upload') || ans.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={
+                      isFileUpload 
+                        ? `max-w-[200px] overflow-hidden text-ellipsis px-3 py-2 bg-gray-50 text-gray-700 text-sm rounded-xl border border-gray-200 shadow-sm ${isImg ? 'p-2' : ''}`
+                        : "p-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm rounded-xl border border-gray-200 shadow-sm transition-colors break-words w-full"
+                    }
+                  >
+                    {isFileUpload && typeof ans === 'string' && ans.startsWith('http') ? (
+                      isImg ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="w-full h-24 rounded-lg overflow-hidden border border-gray-100 bg-white cursor-pointer hover:ring-2 ring-primary-500/50 transition-all" onClick={() => onViewFile(ans)}>
+                            <img src={ans} alt="upload" className="w-full h-full object-cover" />
+                          </div>
+                          <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 text-xs font-semibold flex items-center justify-center gap-1 bg-white border border-gray-200 p-1.5 rounded shadow-sm hover:shadow hover:bg-gray-50 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                            </svg>
+                            {t('dashboard.quickView', 'Quick View')}
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={(e) => { e.preventDefault(); onViewFile(ans); }} className="text-primary-600 hover:text-primary-800 underline break-all flex items-center gap-1 font-medium hover:bg-gray-50 px-2 py-1 -ml-2 rounded transition-colors w-full text-left">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="truncate">{t('dashboard.viewDocument')}</span>
+                        </button>
+                      )
+                    ) : (
+                      typeof ans === 'object' && ans !== null ? (
+                        <div className="flex flex-col gap-1">
+                          {Object.entries(ans).map(([k, v]) => (
+                            <div key={k} className="text-xs">
+                              <span className="font-semibold text-gray-900">{k}:</span> {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        ans
+                      )
+                    )}
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-      {rawAnswers.length > 8 && (
-        <button 
-          onClick={() => setExpanded(!expanded)} 
-          className="mt-3 text-sm font-semibold text-primary-600 hover:text-primary-700"
-        >
-          {expanded ? t('dashboard.showLess') : t('dashboard.showMore', { count: rawAnswers.length - 8 })}
-        </button>
+      {!isFileUpload && rawAnswers.length > 0 && (
+        <div className="mt-3 text-xs text-gray-500 font-medium text-right border-t border-gray-100 pt-2">
+          {filteredAnswers.length} {filteredAnswers.length === 1 ? t('dashboard.response', 'response') : t('dashboard.responses', 'responses')}
+        </div>
       )}
     </div>
   );
@@ -699,7 +757,11 @@ const extractText = (html) => {
 
           {/* Question Renderers */}
           {allQuestions.map((question, index) => {
-            const isVisualType = question.type === 'radio' || question.type === 'checkboxes';
+            const isSingleChoice = ['radio', 'multiple_choice', 'dropdown'].includes(question.type);
+            const isMultipleChoice = question.type === 'checkboxes';
+            const isGrid = ['grid_choice', 'grid_checkbox'].includes(question.type);
+            const isScale = ['linear_scale', 'rating', 'scale'].includes(question.type);
+            const isVisualType = isSingleChoice || isMultipleChoice || isGrid || isScale;
             
             return (
             <motion.div

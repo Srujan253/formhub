@@ -78,26 +78,30 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`mb-4 transition-all duration-300 ${
-        isLayoutBlock ? 'py-4 px-2' : `card border-l-4 ${
-          isError
-            ? 'border-red-400 bg-red-50/40 shadow-md shadow-red-100/50'
-            : 'border-primary-400'
-        }`
+        isLayoutBlock && question.layoutType === 'title_desc' 
+          ? 'py-6 px-6 bg-white border border-gray-100 rounded-2xl shadow-sm text-center' 
+          : isLayoutBlock 
+            ? 'py-4 px-2' 
+            : `card border-l-4 ${
+                isError
+                  ? 'border-red-400 bg-red-50/40 shadow-md shadow-red-100/50'
+                  : 'border-primary-400'
+              }`
       }`}
     >
       <div className={`${isLayoutBlock ? 'mb-2' : 'form-label text-base mb-4'} ${isError ? 'text-red-600' : 'text-gray-800'}`}>
-        <div className="flex items-start">
+        <div className={`flex items-start ${isLayoutBlock && question.layoutType === 'title_desc' ? 'justify-center text-center' : ''}`}>
           <div 
-            className={`prose prose-sm max-w-none break-words ${isLayoutBlock ? 'prose-h1:text-2xl prose-h2:text-xl' : ''}`}
+            className={`prose prose-sm max-w-none break-words ${isLayoutBlock && question.layoutType === 'title_desc' ? 'prose-p:text-2xl prose-p:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h1:font-extrabold text-gray-900 border-b border-gray-100 pb-3 w-full' : isLayoutBlock ? 'prose-p:text-2xl prose-p:font-bold prose-h1:text-2xl prose-h2:text-xl w-full' : ''}`}
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
           />
           {!isLayoutBlock && question.required && <span className="text-red-400 ml-1 mt-1">*</span>}
         </div>
       </div>
 
-{question.description && (
+      {question.description && (
         <div
-          className="prose prose-sm max-w-none text-gray-500 font-normal leading-relaxed mb-4 break-words"
+          className={`prose prose-sm max-w-none font-normal leading-relaxed mb-4 break-words ${isLayoutBlock && question.layoutType === 'title_desc' ? 'text-gray-500 mt-3 text-base text-center w-full' : 'text-gray-500'}`}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.description) }}
         />
       )}

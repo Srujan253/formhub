@@ -139,7 +139,7 @@
     "addSection": "Add Section",
     "deleteSection": "Delete Section",
     "closeWithoutSaving": "Close without saving? All changes will be lost.",
-    "confirmDeleteSection": "Delete this section and all its questions?",
+    "confirmDeleteSection": "Delete this section? Questions will be moved to the adjacent section.",
     "emptyTitleDescriptionWarning": "If you do not enter a title or description, it will not appear on the answer screen.",
     "cannotDeleteLast": "Cannot delete last section",
     "titleRequiredMsg": "Form title is required",

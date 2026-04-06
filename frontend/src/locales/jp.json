@@ -127,7 +127,7 @@
     "addSection": "セクションを追加",
     "deleteSection": "セクションを削除",
     "closeWithoutSaving": "保存せずに閉じますか？変更は失われます。",
-    "confirmDeleteSection": "このセクションとその質問をすべて削除しますか？",
+    "confirmDeleteSection": "このセクションを削除しますか？質問は隣接するセクションに移動します。",
     "emptyTitleDescriptionWarning": "タイトルまたは説明を入力しない場合、回答画面には表示されません。",
     "cannotDeleteLast": "最後のセクションは削除できません",
     "titleRequiredMsg": "フォームのタイトルは必須です",
