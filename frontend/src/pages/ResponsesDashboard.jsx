@@ -8,8 +8,22 @@ import { formAPI, responseAPI } from '../services/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, BarChart, Bar, LabelList } from 'recharts';
 
-const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
-const truncateText = (str, n) => (str && str.length > n ? str.substr(0, n - 1) + '…' : str);
+  const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
+  const truncateText = (str, n) => str;
+
+  const CustomYAxisTick = ({ x, y, payload }) => {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <foreignObject x={-260} y={-40} width={250} height={80}>
+          <div xmlns="http://www.w3.org/1999/xhtml" 
+               style={{ fontSize: 12, color: '#475569', textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', wordBreak: 'break-word', lineHeight: '1.3em', paddingRight: '8px' }}
+               title={payload.value}>
+            {payload.value}
+          </div>
+        </foreignObject>
+      </g>
+    );
+  };
 
 const FileModal = ({ url, onClose }) => {
   const { t } = useTranslation();
@@ -195,10 +209,10 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
             {chartData.map((entry, index) => {
               const pct = totalRespondents > 0 ? Math.round((entry.value / totalRespondents) * 100) : 0;
               return (
-                <motion.div variants={{ hidden: {opacity:0, y:5}, show: {opacity:1, y:0} }} key={index} className="flex items-center text-sm text-gray-700 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-                  <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: RADIO_COLORS[index % RADIO_COLORS.length] }}></span>
-                  <span className="font-medium mr-2 truncate max-w-[150px]" title={entry.name}>{entry.name}</span>
-                  <span className="text-gray-400 font-semibold">{pct}%</span>
+                  <motion.div variants={{ hidden: {opacity:0, y:5}, show: {opacity:1, y:0} }} key={index} className="flex items-start text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 shadow-sm w-full sm:w-auto h-auto overflow-hidden">
+                    <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0 mt-1" style={{ backgroundColor: RADIO_COLORS[index % RADIO_COLORS.length] }}></span>
+                    <span className="font-medium mr-2 whitespace-normal text-left break-words" title={entry.name}>{entry.name}</span>
+                    <span className="text-gray-400 font-semibold ml-auto pl-2 shrink-0 mt-0.5">{pct}%</span>
                 </motion.div>
               );
             })}
@@ -210,7 +224,7 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
       // CHECKBOXES, GRID, SCALE - use BarChart
       const sortedData = Object.entries(counts)
         .map(([name, value]) => ({ 
-          name: truncateText(name, 24), 
+          name: name, 
           fullName: name, 
           value 
         }))
@@ -222,12 +236,12 @@ const QuestionSimpleVisual = ({ question, responses, onViewFile }) => {
 
       return (
         <div className="mt-4">
-          <div className="w-full" style={{ height: `${Math.max(sortedData.length * 52 + 30, 150)}px` }}>
+          <div className="w-full" style={{ height: `${Math.max(sortedData.length * 80 + 30, 200)}px` }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sortedData} layout="vertical" margin={{ top: 0, right: 120, left: 10, bottom: 0 }}>
+              <BarChart data={sortedData} layout="vertical" margin={{ top: 0, right: 120, left: 120, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                 <XAxis type="number" hide domain={[0, 'dataMax']} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} width={130} tickLine={false} axisLine={false} />
+                <YAxis type="category" dataKey="name" tick={<CustomYAxisTick />} width={260} tickLine={false} axisLine={false} />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{ backgroundColor: '#1f2937', color: '#fff', borderRadius: '8px', border: 'none' }}

@@ -81,7 +81,7 @@ export const updateForm = async (req, res) => {
     const updatedForm = await Form.findByIdAndUpdate(
       id,
       { title, description, headerImage, mediaUrl, mediaType, ...(sectionsToUpdate && { sections: sectionsToUpdate }), isActive },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedForm) {

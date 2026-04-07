@@ -72,8 +72,14 @@ const PublicFormView = () => {
   const [respondentName, setRespondentName] = useState('');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [viewingFile, setViewingFile] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem(`submitted_${token}`)) {
+      setSuccess(true);
+      setLoading(false);
+      return;
+    }
     fetchForm();
   }, [token]);
 
@@ -172,13 +178,19 @@ const PublicFormView = () => {
     const currentIsLastSection = currentSectionIndex === form.sections.length - 1;
 
     // Completely block submit if we are not on the last section!
-    if (currentIsMultiSection && !currentIsLastSection) {
+    if (!showConfirm && currentIsMultiSection && !currentIsLastSection) {
       handleNext(e);
-      return; 
+      return;
     }
 
     if (!validateAll()) {
       setError(t('public.fillRequired'));
+      return;
+    }
+
+    if (!showConfirm) {
+      setShowConfirm(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -199,6 +211,7 @@ const PublicFormView = () => {
         respondentName: respondentName.trim() || '',
       });
 
+      localStorage.setItem(`submitted_${token}`, 'true');
       setSuccess(true);
       setAnswers({});
       setRespondentName('');
@@ -243,7 +256,6 @@ const PublicFormView = () => {
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{t('public.thankYou')}</h2>
           <p className="text-gray-500 text-sm mb-6">{t('public.success')}</p>
-          <button onClick={() => { setSuccess(false); setAnswers({}); }} className="btn-secondary text-sm">{t('public.submitAnother')}</button>
         </motion.div>
       </div>
     );
@@ -316,30 +328,72 @@ const PublicFormView = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-20">
-          <AnimatePresence mode="wait">
+          {showConfirm ? (
             <motion.div
-              key={currentSectionIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
             >
-              {currentSection.items.map((item) => (
-                <QuestionPreview
-                  key={item.id}
-                  question={item}
-                  answer={answers[item.id]}
-                  onChange={handleAnswerChange}
-                  errors={errors}
-                  onViewFile={setViewingFile}
-                />
+              <div className="card text-center py-6 border-b-4 border-emerald-500 bg-emerald-50/50">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('public.confirmTitle', { defaultValue: 'Confirm Your Responses' })}</h2>
+                <p className="text-gray-600 text-sm">{t('public.confirmDesc', { defaultValue: 'Please verify your information is correct before submitting. You can edit your answers directly below.' })}</p>
+              </div>
+              
+              {form.sections.map((section, sIndex) => (
+                <div key={section.id || sIndex} className="space-y-4 mb-8">
+                  {(section.title || section.description) && (
+                    <div className="card bg-gray-50/50 border border-gray-100">
+                      {section.title && <h3 className="text-lg font-bold text-gray-900 mb-1">{section.title}</h3>}
+                      {section.description && <p className="text-sm text-gray-600 whitespace-pre-wrap">{section.description}</p>}
+                    </div>
+                  )}
+                  {section.items.map((item) => (
+                    <QuestionPreview
+                      key={item.id}
+                      question={item}
+                      answer={answers[item.id]}
+                      onChange={handleAnswerChange}
+                      errors={errors}
+                      onViewFile={setViewingFile}
+                    />
+                  ))}
+                </div>
               ))}
             </motion.div>
-          </AnimatePresence>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSectionIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
+                {currentSection.items.map((item) => (
+                  <QuestionPreview
+                    key={item.id}
+                    question={item}
+                    answer={answers[item.id]}
+                    onChange={handleAnswerChange}
+                    errors={errors}
+                    onViewFile={setViewingFile}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
           <div className="flex justify-between items-center pt-6 gap-4">
-            {isMultiSection && !isFirstSection ? (
+            {showConfirm ? (
+               <button
+                 type="button"
+                 onClick={() => setShowConfirm(false)}
+                 className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+               >
+                 <ChevronLeft size={18} /> {t('public.back', { defaultValue: 'Back to Form' })}
+               </button>
+            ) : isMultiSection && !isFirstSection ? (
                <button
                  type="button"
                  onClick={handleBack}
@@ -351,7 +405,7 @@ const PublicFormView = () => {
               <div></div>
             )}
 
-            {isMultiSection && !isLastSection ? (
+            {!showConfirm && isMultiSection && !isLastSection ? (
                <button
                  type="button"
                  onClick={handleNext}
@@ -360,26 +414,26 @@ const PublicFormView = () => {
                  {t('public.next')} <ChevronRight size={18} />
                </button>
             ) : (
-               <button
-                 type="submit"
-                 disabled={submitting}
-                 className={`px-8 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-white transition-all duration-300 shadow-md ${
-                   submitting
-                     ? 'bg-gray-400 shadow-none cursor-not-allowed'
-                     : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-emerald-500/40'
-                 }`}
-               >
-                 {submitting ? (
-                   <>
-                     <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-                     {t('public.submitting')}
-                   </>
-                 ) : (
-                   <>
-                     <Send size={18} /> {t('public.submitButton')}
-                   </>
-                 )}
-               </button>
+                 <button
+                   type="submit"
+                   disabled={submitting}
+                   className={`px-8 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-white transition-all duration-300 shadow-md ${
+                     submitting
+                       ? 'bg-gray-400 shadow-none cursor-not-allowed'
+                       : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-emerald-500/40'
+                   }`}
+                 >
+                   {submitting ? (
+                     <>
+                       <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                       {t('public.submitting')}
+                     </>
+                   ) : (
+                     <>
+                       <Send size={18} /> {showConfirm ? t('public.confirmSubmit', { defaultValue: 'Confirm & Submit' }) : t('public.submitButton')}
+                     </>
+                   )}
+                 </button>
             )}
           </div>
         </form>

@@ -43,11 +43,11 @@ const PaletteTool = ({ icon: Icon, label, onClick }) => (
     whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
-    className="w-10 h-10 bg-white rounded-xl shadow-glass border border-gray-100 flex items-center justify-center text-gray-600 hover:text-primary-600 hover:border-primary-100 transition-colors relative group"
+    className="w-12 h-12 bg-white rounded-xl shadow-glass border border-gray-100 flex items-center justify-center text-gray-600 hover:text-primary-600 hover:border-primary-100 hover:bg-primary-50 transition-all relative group"
     title={label}
   >
-    <Icon size={18} />
-    <div className="absolute right-12 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+    <Icon size={24} strokeWidth={1.5} />
+    <div className="absolute right-14 px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
       {label}
     </div>
   </motion.button>
@@ -169,6 +169,17 @@ const FormBuilder = () => {
     setActiveSection(sIndex);
   };
 
+  const scrollToSection = (index) => {
+    setActiveSection(index);
+    setTimeout(() => {
+      const element = document.getElementById(`section-${index}`);
+      if (element) {
+        const y = element.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 50);
+  };
+
   const handleAddSection = () => {
     const newSection = {
       id: uuidv4(),
@@ -176,9 +187,12 @@ const FormBuilder = () => {
       description: '',
       items: [],
     };
-    setFormData({ ...formData, sections: [...formData.sections, newSection] });
+    const sections = [...formData.sections];
+    sections.splice(activeSection + 1, 0, newSection);
+
+    setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
-    setActiveSection(formData.sections.length);
+    scrollToSection(activeSection + 1);
   };
 
   const handleDeleteSection = (sIndex) => {
@@ -236,7 +250,16 @@ const FormBuilder = () => {
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
-    const { source, destination } = result;
+    const { source, destination, type } = result;
+
+    if (type === 'SECTION') {
+      const newSections = Array.from(formData.sections);
+      const [movedSection] = newSections.splice(source.index, 1);
+      newSections.splice(destination.index, 0, movedSection);
+      setFormData({ ...formData, sections: newSections });
+      setHasUnsavedChanges(true);
+      return;
+    }
 
     const sourceSIndex = parseInt(source.droppableId);
     const destSIndex = parseInt(destination.droppableId);
@@ -411,76 +434,96 @@ const FormBuilder = () => {
         </form>
 
         <DragDropContext onDragEnd={onDragEnd}>
-          {formData.sections.map((section, sIndex) => (
-              <div key={section.id} className={`mb-10 relative ${activeSection === sIndex ? 'z-50' : 'z-10'}`} onClick={() => setActiveSection(sIndex)}>
+          <Droppable droppableId="sections" type="SECTION">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {formData.sections.map((section, sIndex) => (
+                  <Draggable key={`section-${section.id}`} draggableId={`section-${section.id}`} index={sIndex} isDragDisabled={sIndex === 0}>
+                    {(provided, snapshot) => (
+                      <div
+                          id={`section-${sIndex}`}
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`mb-10 relative scroll-mt-24 ${activeSection === sIndex ? 'z-50' : 'z-10'}`}
+                        onClick={() => setActiveSection(sIndex)}
+                      >
+                        {sIndex > 0 && (<div className="absolute left-1/2 -top-4 -translate-x-1/2 bg-white border-2 border-primary-100 rounded-full shadow-md text-primary-500 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 cursor-grab active:cursor-grabbing z-20">
+                          <div {...provided.dragHandleProps} className="px-3 py-1 flex items-center justify-center">
+                            <GripVertical size={20} /></div></div>)}
 
-                { (sIndex > 0 || (sIndex === 0 && (section.title || section.description))) && (
-                  <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 mr-4">
-                        <textarea
-                          value={section.title}
-                          onChange={(e) => {
-                            e.target.style.height = 'inherit';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                            handleSectionChange(sIndex, { title: e.target.value });
-                          }}
-                          placeholder={t('formBuilder.sectionTitle', { defaultValue: 'Section Title' })}
-                          className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
-                          rows="1"
-                        />
-                        <textarea
-                          value={section.description || ''}
-                          onChange={(e) => {
-                            e.target.style.height = 'inherit';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                            handleSectionChange(sIndex, { description: e.target.value });
-                          }}
-                          placeholder={t('formBuilder.description', { defaultValue: 'Description (optional)' })}
-                          className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
-                          rows="1"
-                        />
-                        <p className="text-xs text-red-500 mt-2 px-2">
-                          {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
-                        </p>
-                      </div>
-                      <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-              <Droppable droppableId={sIndex.toString()}>
-                {(provided, snapshot) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className={`space-y-4 min-h-[50px] transition-colors rounded-xl ${snapshot.isDraggingOver ? 'bg-primary-50/50 p-2' : ''}`}>
-                    {section.items.map((item, iIndex) => (
-                      <Draggable key={item.id} draggableId={item.id} index={iIndex}>
-                        {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} className={`${snapshot.isDragging ? 'z-50' : ''}`}>
-                            <div className="relative group">
-                              <div {...provided.dragHandleProps} className="absolute left-1/2 -top-3 -translate-x-1/2 opacity-0 group-hover:opacity-100 p-1 bg-white border border-gray-200 rounded shadow-sm text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing z-10 transition-opacity">
-                                <GripVertical size={16} />
+                        { (sIndex > 0 || (sIndex === 0 && (section.title || section.description))) && (
+                          <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1 mr-4">
+                                <textarea
+                                  value={section.title}
+                                  onChange={(e) => {
+                                    e.target.style.height = 'inherit';
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                    handleSectionChange(sIndex, { title: e.target.value });
+                                  }}
+                                  placeholder={t('formBuilder.sectionTitle', { defaultValue: 'Section Title' })}
+                                  className="text-xl font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 mb-2 transition-colors resize-none overflow-hidden"
+                                  rows="1"
+                                />
+                                <textarea
+                                  value={section.description || ''}
+                                  onChange={(e) => {
+                                    e.target.style.height = 'inherit';
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                    handleSectionChange(sIndex, { description: e.target.value });
+                                  }}
+                                  placeholder={t('formBuilder.description', { defaultValue: 'Description (optional)' })}
+                                  className="text-sm text-gray-600 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary-500 focus:outline-none w-full px-2 py-1 transition-colors resize-none overflow-hidden"
+                                  rows="1"
+                                />
+                                <p className="text-xs text-red-500 mt-2 px-2">
+                                  {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
+                                </p>
                               </div>
-                              <QuestionInput
-                                question={item}
-                                onChange={(updated) => handleItemChange(sIndex, iIndex, updated)}
-                                onDuplicate={() => handleDuplicateItem(sIndex, iIndex)}
-                                onDelete={() => handleDeleteItem(sIndex, iIndex)}
-                                onUploadSuccess={() => { setToast({ message: 'Media updated!', type: 'success' }); setTimeout(() => setToast(null), 3000); }}
-                              />
+                              <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
+                                <Trash2 size={18} />
+                              </button>
                             </div>
                           </div>
                         )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
 
-            </div>
-          ))}
+                        <Droppable droppableId={sIndex.toString()} type="ITEM">
+                          {(provided, snapshot) => (
+                            <div {...provided.droppableProps} ref={provided.innerRef} className={`space-y-4 min-h-[50px] transition-colors rounded-xl ${snapshot.isDraggingOver ? 'bg-primary-50/50 p-2' : ''}`}>
+                              {section.items.map((item, iIndex) => (
+                                <Draggable key={item.id} draggableId={item.id} index={iIndex}>
+                                  {(provided, snapshot) => (
+                                    <div ref={provided.innerRef} {...provided.draggableProps} className={`${snapshot.isDragging ? 'z-50' : ''} pt-3 relative`}>
+                                      <div className="relative group">
+                                        <div {...provided.dragHandleProps} className="absolute left-1/2 -top-4 -translate-x-1/2 bg-white border border-primary-100 rounded-full shadow-sm text-primary-400 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 cursor-grab active:cursor-grabbing z-20 px-3 py-1 flex items-center justify-center">
+                                          <GripVertical size={16} />
+                                        </div>
+                                        <QuestionInput
+                                          question={item}
+                                          onChange={(updated) => handleItemChange(sIndex, iIndex, updated)}
+                                          onDuplicate={() => handleDuplicateItem(sIndex, iIndex)}
+                                          onDelete={() => handleDeleteItem(sIndex, iIndex)}
+                                          onUploadSuccess={() => { setToast({ message: 'Media updated!', type: 'success' }); setTimeout(() => setToast(null), 3000); }}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </DragDropContext>
         </div>
       </div>
@@ -533,7 +576,7 @@ const FormBuilder = () => {
             initial={{ y: 100, opacity: 0, x: '-50%' }}
             animate={{ y: 0, opacity: 1, x: '-50%' }}
             exit={{ y: 100, opacity: 0, x: '-50%' }}
-            className="fixed bottom-8 left-1/2 z-[100] flex gap-3 p-2 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-2xl"
+            className="fixed bottom-20 left-1/2 z-[100] flex gap-3 p-2 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-2xl"
           >
             <motion.button onClick={handleSaveForm} disabled={saving} className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-base shadow-md transition-all duration-300 ${saving ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700 shadow-primary-500/20'}`}>
               {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={20} />}
@@ -549,9 +592,48 @@ const FormBuilder = () => {
         shareToken={formData?.shareToken}
         formTitle={formData?.title}
       />
+
+      {formData.sections && formData.sections.length > 1 && (
+        <div className="fixed bottom-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-40 bg-white/90 backdrop-blur-md rounded-2xl shadow-glass border border-gray-200 p-2 flex items-center gap-2 max-w-full overflow-x-auto">
+          <button
+            onClick={() => scrollToSection(activeSection > 0 ? activeSection - 1 : formData.sections.length - 1)}
+            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            title="Previous Section"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          
+          <div className="flex gap-1 overflow-x-auto px-2 scrollbar-none">
+            {formData.sections.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => scrollToSection(idx)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
+                  activeSection === idx 
+                    ? 'bg-primary-600 text-white shadow-md' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => scrollToSection(activeSection < formData.sections.length - 1 ? activeSection + 1 : 0)}
+            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            title="Next Section"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
 export default FormBuilder;
+
+
+
 
 
