@@ -73,6 +73,11 @@ const PublicFormView = () => {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [viewingFile, setViewingFile] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsDescriptionExpanded(false);
+  }, [currentSectionIndex]);
 
   useEffect(() => {
     if (localStorage.getItem(`submitted_${token}`)) {
@@ -316,7 +321,25 @@ const PublicFormView = () => {
             className="card mb-6 bg-primary-50/30 border border-primary-100/50"
           >
              {currentSection.title?.trim() && <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.title}</h2>}
-             {currentSection.description?.trim() && <p className="text-gray-500 text-sm">{currentSection.description}</p>}
+             {currentSection.description?.trim() && (
+               <div className="relative">
+                 <div className={`text-gray-500 text-sm whitespace-pre-wrap transition-all duration-300 ${!isDescriptionExpanded && currentSectionIndex > 0 ? 'line-clamp-2' : ''}`}>
+                   {currentSection.description}
+                 </div>
+                 {currentSectionIndex > 0 && currentSection.description.split('\\n').length > 2 && (
+                   <button 
+                     type="button" 
+                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                     className="mt-2 text-primary-600 text-xs font-semibold hover:text-primary-700 flex items-center gap-1"
+                   >
+                     {isDescriptionExpanded ? 'Show less' : 'Show more'}
+                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isDescriptionExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                       <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                     </svg>
+                   </button>
+                 )}
+               </div>
+             )}
           </motion.div>
         )}
 

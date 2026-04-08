@@ -8,7 +8,15 @@ import { formAPI, responseAPI } from '../services/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, BarChart, Bar, LabelList } from 'recharts';
 
-  const RADIO_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
+  // 15 color variations with shades of purple, blue, and green
+  const RADIO_COLORS = [
+    // Purples
+    "#9333ea", "#a855f7", "#8b5cf6", "#7c3aed", "#c4b5fd", 
+    // Blues
+    "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#bfdbfe",
+    // Greens
+    "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0"
+  ];
   const truncateText = (str, n) => str;
 
   const CustomYAxisTick = ({ x, y, payload }) => {
@@ -790,11 +798,16 @@ const extractText = (html) => {
                 <div className={`${isVisualType ? 'bg-indigo-100 text-indigo-700' : 'bg-primary-50 text-primary-600'} font-bold text-xs px-3 py-1.5 rounded-full shrink-0 mt-0.5`}>
                   Q{index + 1}
                 </div>
-                <div className="flex-1">
-                  <div 
+                <div className="flex-1 flex items-center justify-between">
+                  <div
                     className={`text-base prose prose-sm max-w-none ${isVisualType ? 'font-semibold text-gray-900' : 'font-bold text-gray-900'}`}
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
                   />
+                  {question.type && (
+                    <span className="text-xs font-bold ml-4 bg-gray-100/80 text-gray-600 px-2.5 py-1 rounded border border-gray-200/50 shadow-sm shrink-0 whitespace-nowrap">
+                      {t(`formBuilder.types.${question.type}`, question.type.replace('_', ' '))}
+                    </span>
+                  )}
                 </div>
               </div>
               <QuestionSimpleVisual question={question} responses={responses} onViewFile={setViewingFile} />

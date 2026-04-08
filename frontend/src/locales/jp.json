@@ -145,17 +145,18 @@
     "enterDescriptionHint": "ここに説明を入力（任意）",
     "textSegment": "テキストセグメント (説明)",
     "types": {
-      "short_answer": "Short Answer (記述式)",
-      "paragraph": "Paragraph (段落)",
-      "multiple_choice": "Multiple Choice",
-      "radio": "Radio buttons (ラジオボタン)",
-      "checkboxes": "Checkboxes (チェックボックス)",
-      "dropdown": "Dropdown (プルダウン)",
-      "file_upload": "File Upload (ファイルアップロード)",
-      "linear_scale": "Linear Scale",
-      "section_break": "Section Break (セクション区切り)",
-      "grid_choice": "Multiple Choice Grid",
-      "grid_checkbox": "Checkbox Grid"
+      "short_answer": "記述式",
+      "paragraph": "段落",
+      "multiple_choice": "マルチチョイス",
+      "radio": "ラジオボタン",
+      "checkboxes": "チェックボックス",
+      "dropdown": "プルダウン",
+      "file_upload": "ファイルアップロード",
+      "linear_scale": "均等目盛",
+      "section_break": "セクション区切り",
+      "grid_choice": "選択式（グリッド）",
+      "grid_checkbox": "チェックボックス（グリッド）",
+      "layout_block": "レイアウトブロック"
     }
   },
   "public": {

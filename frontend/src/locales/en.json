@@ -155,7 +155,21 @@
     "enterQuestionHint": "Enter question here",
     "addDescription": "Add Description",
     "enterDescriptionHint": "Enter description here (optional)",
-    "textSegment": "Text Segment (Description)"
+    "textSegment": "Text Segment (Description)",
+    "types": {
+      "short_answer": "Short Answer",
+      "paragraph": "Paragraph",
+      "multiple_choice": "Multiple Choice",
+      "radio": "Radio Buttons",
+      "checkboxes": "Checkboxes",
+      "dropdown": "Dropdown",
+      "file_upload": "File Upload",
+      "linear_scale": "Linear Scale",
+      "section_break": "Section Break",
+      "grid_choice": "Multiple Choice Grid",
+      "grid_checkbox": "Checkbox Grid",
+      "layout_block": "Layout Block"
+    }
   },
   "public": {
     "submit": "Submit Response",
