@@ -503,7 +503,7 @@ const FormBuilder = () => {
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
                 {formData.sections.map((section, sIndex) => (
-                  <Draggable key={`section-${section.id}`} draggableId={`section-${section.id}`} index={sIndex} isDragDisabled={sIndex === 0}>
+                  <Draggable key={`section-${section.id}`} draggableId={`section-${section.id}`} index={sIndex} isDragDisabled={true}>
                     {(provided, snapshot) => (
                       <div
                           id={`section-${sIndex}`}
@@ -519,9 +519,7 @@ const FormBuilder = () => {
                         }}
                       >
 
-                        {sIndex > 0 && (<div className="absolute left-1/2 -top-4 -translate-x-1/2 bg-white border-2 border-primary-100 rounded-full shadow-md text-primary-500 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 cursor-grab active:cursor-grabbing z-20">
-                          <div {...provided.dragHandleProps} className="px-3 py-1 flex items-center justify-center">
-                            <GripVertical size={20} /></div></div>)}
+                        {/* Drag handler block completely removed as nested sections visually drag all their contents by layout rules */}
 
                         { (sIndex > 0 || (sIndex === 0 && (section.title || section.description))) && (
                           <div className={`card mb-4 relative ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
@@ -557,6 +555,16 @@ const FormBuilder = () => {
                                 </p>
                               </div>
                               <div className="flex flex-col items-center gap-1 sm:flex-row">
+                                {sIndex > 0 && (
+                                  <>
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); handleMoveSectionBreakUp(sIndex); }} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title={t('formBuilder.moveSectionUp', { defaultValue: 'Move section break up one question' })}>
+                                      <ChevronUp size={18} />
+                                    </button>
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); handleMoveSectionBreakDown(sIndex); }} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title={t('formBuilder.moveSectionDown', { defaultValue: 'Move section break down one question' })}>
+                                      <ChevronDown size={18} />
+                                    </button>
+                                  </>
+                                )}
                                 <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteSection(sIndex); }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
                                   <Trash2 size={18} />
                                 </button>
