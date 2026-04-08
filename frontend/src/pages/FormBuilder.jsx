@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2, Eye } from 'lucide-react';
+import { Plus, Save, AlertCircle, Share2, ArrowLeft, GripVertical, Type, Image as ImageIcon, LayoutList, Trash2, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -66,6 +66,7 @@ const FormBuilder = () => {
     ],
   });
   const [activeSection, setActiveSection] = useState(0);
+  const [activeItemIndex, setActiveItemIndex] = useState(null);
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -163,7 +164,15 @@ const FormBuilder = () => {
       options: [],
     };
     const sections = [...formData.sections];
-    sections[sIndex].items.push(newItem);
+    
+    if (activeItemIndex !== null && sIndex === activeSection) {
+      sections[sIndex].items.splice(activeItemIndex + 1, 0, newItem);
+      setActiveItemIndex(activeItemIndex + 1);
+    } else {
+      sections[sIndex].items.push(newItem);
+      setActiveItemIndex(sections[sIndex].items.length - 1);
+    }
+    
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
     setActiveSection(sIndex);
@@ -172,7 +181,7 @@ const FormBuilder = () => {
   const scrollToSection = (index) => {
     setActiveSection(index);
     setTimeout(() => {
-      const element = document.getElementById(`section-${index}`);
+      const element = index === 0 ? document.getElementById('form-header-card') : document.getElementById(`section-${index}`);
       if (element) {
         const y = element.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: 'smooth' });
@@ -188,10 +197,20 @@ const FormBuilder = () => {
       items: [],
     };
     const sections = [...formData.sections];
+    
+    if (activeItemIndex !== null) {
+      // Split the active section's items below the active item
+      const currentItems = sections[activeSection].items;
+      const itemsToMove = currentItems.splice(activeItemIndex + 1);
+      newSection.items = itemsToMove;
+    }
+    
     sections.splice(activeSection + 1, 0, newSection);
 
     setFormData({ ...formData, sections });
     setHasUnsavedChanges(true);
+    setActiveSection(activeSection + 1);
+    setActiveItemIndex(null); 
     scrollToSection(activeSection + 1);
   };
 
@@ -225,6 +244,36 @@ const FormBuilder = () => {
     setSectionToDelete(null);
   };
 
+  const handleMoveSectionBreakUp = (sIndex) => {
+    if (sIndex === 0) return;
+    const sections = [...formData.sections];
+    const prevSection = sections[sIndex - 1];
+    const currentSection = sections[sIndex];
+    if (prevSection.items.length === 0) return; // no questions to grab
+    
+    // The last item of the previous section moves to the top of the current section
+    const itemToMove = prevSection.items.pop();
+    currentSection.items.unshift(itemToMove);
+    
+    setFormData({ ...formData, sections });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleMoveSectionBreakDown = (sIndex) => {
+    // Moving this break down means bringing the *first* item of the *current* section into the *previous* section!
+    if (sIndex === 0) return;
+    const sections = [...formData.sections];
+    const prevSection = sections[sIndex - 1];
+    const currentSection = sections[sIndex];
+    if (currentSection.items.length === 0) return;
+    
+    const itemToMove = currentSection.items.shift();
+    prevSection.items.push(itemToMove);
+    
+    setFormData({ ...formData, sections });
+    setHasUnsavedChanges(true);
+  };
+
   const handleItemChange = (sIndex, iIndex, updatedItem) => {
     const sections = [...formData.sections];
     sections[sIndex].items[iIndex] = updatedItem;
@@ -254,8 +303,19 @@ const FormBuilder = () => {
 
     if (type === 'SECTION') {
       const newSections = Array.from(formData.sections);
+      
+      // Preserve the questions for each positional index
+      const originalItemsArrays = newSections.map(sec => sec.items);
+      
+      // Move only the section objects
       const [movedSection] = newSections.splice(source.index, 1);
       newSections.splice(destination.index, 0, movedSection);
+      
+      // Reattach the items to the positional slots so they don't move
+      newSections.forEach((sec, i) => {
+        sec.items = originalItemsArrays[i];
+      });
+      
       setFormData({ ...formData, sections: newSections });
       setHasUnsavedChanges(true);
       return;
@@ -416,9 +476,14 @@ const FormBuilder = () => {
         <AnimatePresence>{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</AnimatePresence>
 
         <div className="pb-32">
-          <form onSubmit={handleSaveForm} className="card mb-6">
-              <h1 className="text-2xl font-bold mb-6 text-gray-900">{id ? t('formBuilder.edit') : t('formBuilder.createNewForm')}</h1>
-            <div className="mb-5">
+          <form id="form-header-card" onSubmit={handleSaveForm} className="card mb-6 relative">
+          {formData.sections.length > 1 && (
+            <div className="absolute -top-3 left-4 bg-primary-100 text-primary-700 px-3 py-1 text-xs font-bold rounded-full shadow-sm">
+              {t('formBuilder.sectionCount', { defaultValue: `Section 1 of ${formData.sections.length}` })}
+            </div>
+          )}
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 mt-2">{id ? t('formBuilder.edit') : t('formBuilder.createNewForm')}</h1>
+          <div className="mb-5">
             <label className="form-label">{t('formBuilder.formTitle')}</label>
             <input type="text" value={formData.title} onChange={(e) => handleFormDataChange({ title: e.target.value })} placeholder={t('formBuilder.formTitlePlaceholder')} className="form-input text-lg font-semibold" required />
           </div>
@@ -445,15 +510,25 @@ const FormBuilder = () => {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={`mb-10 relative scroll-mt-24 ${activeSection === sIndex ? 'z-50' : 'z-10'}`}
-                        onClick={() => setActiveSection(sIndex)}
+                        onClick={(e) => {
+                          // Allow internal inputs/buttons to function independently
+                          if (e.target.tagName.toLowerCase() !== 'textarea' && e.target.tagName.toLowerCase() !== 'input') {
+                            setActiveSection(sIndex);
+                            setActiveItemIndex(null);
+                          }
+                        }}
                       >
+
                         {sIndex > 0 && (<div className="absolute left-1/2 -top-4 -translate-x-1/2 bg-white border-2 border-primary-100 rounded-full shadow-md text-primary-500 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 cursor-grab active:cursor-grabbing z-20">
                           <div {...provided.dragHandleProps} className="px-3 py-1 flex items-center justify-center">
                             <GripVertical size={20} /></div></div>)}
 
                         { (sIndex > 0 || (sIndex === 0 && (section.title || section.description))) && (
-                          <div className={`card mb-4 ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
-                            <div className="flex justify-between items-start mb-4">
+                          <div className={`card mb-4 relative ${activeSection === sIndex ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
+                            <div className="absolute -top-3 left-4 bg-primary-100 text-primary-700 px-3 py-1 text-xs font-bold rounded-full shadow-sm">
+                              {t('formBuilder.sectionCount', { defaultValue: `Section ${sIndex + 1} of ${formData.sections.length}` })}
+                            </div>
+                            <div className="flex justify-between items-start mb-4 mt-2">
                               <div className="flex-1 mr-4">
                                 <textarea
                                   value={section.title}
@@ -481,9 +556,11 @@ const FormBuilder = () => {
                                   {t('formBuilder.emptyTitleDescriptionWarning', { defaultValue: 'If you do not enter a title or description, it will not appear on the answer screen.' })}
                                 </p>
                               </div>
-                              <button type="button" onClick={() => handleDeleteSection(sIndex)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
-                                <Trash2 size={18} />
-                              </button>
+                              <div className="flex flex-col items-center gap-1 sm:flex-row">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteSection(sIndex); }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title={t('formBuilder.deleteSection', { defaultValue: 'Delete section' })}>
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -494,7 +571,16 @@ const FormBuilder = () => {
                               {section.items.map((item, iIndex) => (
                                 <Draggable key={item.id} draggableId={item.id} index={iIndex}>
                                   {(provided, snapshot) => (
-                                    <div ref={provided.innerRef} {...provided.draggableProps} className={`${snapshot.isDragging ? 'z-50' : ''} pt-3 relative`}>
+                                    <div 
+                                      ref={provided.innerRef} 
+                                      {...provided.draggableProps} 
+                                      className={`${snapshot.isDragging ? 'z-50' : ''} pt-3 relative`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveSection(sIndex);
+                                        setActiveItemIndex(iIndex);
+                                      }}
+                                    >
                                       <div className="relative group">
                                         <div {...provided.dragHandleProps} className="absolute left-1/2 -top-4 -translate-x-1/2 bg-white border border-primary-100 rounded-full shadow-sm text-primary-400 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 cursor-grab active:cursor-grabbing z-20 px-3 py-1 flex items-center justify-center">
                                           <GripVertical size={16} />
@@ -594,7 +680,7 @@ const FormBuilder = () => {
       />
 
       {formData.sections && formData.sections.length > 1 && (
-        <div className="fixed bottom-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-40 bg-white/90 backdrop-blur-md rounded-2xl shadow-glass border border-gray-200 p-2 flex items-center gap-2 max-w-full overflow-x-auto">
+        <div className="fixed bottom-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-[200] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-glass border border-gray-200 p-2 flex items-center gap-2 max-w-full overflow-x-auto">
           <button
             onClick={() => scrollToSection(activeSection > 0 ? activeSection - 1 : formData.sections.length - 1)}
             className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
