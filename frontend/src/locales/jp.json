@@ -183,7 +183,8 @@
     "pageOf": "{{current}} / {{total}} ページ",
     "questionCount_one": "{{count}} 件の質問",
     "questionCount_other": "{{count}} 件の質問",
-    "submitButton": "送信"
+    "submitButton": "確認",
+    "confirmSubmit": "確認して送信"
   },
   "dashboard": {
     "totalResponses": "総回答数",

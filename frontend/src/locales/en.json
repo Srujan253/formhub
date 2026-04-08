@@ -195,7 +195,8 @@
     "pageOf": "Page {{current}} of {{total}}",
     "questionCount_one": "{{count}} question",
     "questionCount_other": "{{count}} questions",
-    "submitButton": "Submit"
+    "submitButton": "Confirm",
+    "confirmSubmit": "Confirm & Submit"
   },
   "dashboard": {
     "totalResponses": "Total Responses",

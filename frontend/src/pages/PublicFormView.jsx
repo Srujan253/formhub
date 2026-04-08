@@ -60,7 +60,7 @@ const FileModal = ({ url, onClose }) => {
 };
 
 const PublicFormView = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useParams();
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +74,11 @@ const PublicFormView = () => {
   const [viewingFile, setViewingFile] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language.startsWith('en') ? 'jp' : 'en';
+    i18n.changeLanguage(newLang);
+  };
 
   useEffect(() => {
     setIsDescriptionExpanded(false);
@@ -282,11 +287,20 @@ const PublicFormView = () => {
             </div>
             <span className="text-sm font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">{t('appName', { defaultValue: 'Pulse' })}</span>
           </div>
-          {isMultiSection && (
-             <div className="text-xs font-semibold text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
-               {t('public.pageOf', { current: currentSectionIndex + 1, total: form.sections.length })}
-             </div>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+              {i18n.language && i18n.language.startsWith('en') ? '日本語' : 'English'}
+            </button>
+            {isMultiSection && (
+               <div className="text-xs font-semibold text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+                 {t('public.pageOf', { current: currentSectionIndex + 1, total: form.sections.length })}
+               </div>
+            )}
+          </div>
         </div>
 
         {/* Global Form Header - Always keep it visible or only on first page?
