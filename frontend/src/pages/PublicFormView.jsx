@@ -314,10 +314,24 @@ const PublicFormView = () => {
           )}
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{form.title}</h1>
           {form.description && (
-            <div 
-              className="prose prose-sm max-w-none text-gray-500 leading-relaxed mb-4 break-words"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
-            />
+            <div className="relative">
+              <div 
+                className={`prose prose-sm max-w-none text-gray-500 leading-relaxed mb-4 break-words transition-all duration-300 ${!isDescriptionExpanded && currentSectionIndex > 0 ? 'line-clamp-2' : ''}`}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
+              />
+              {currentSectionIndex > 0 && (
+                <button 
+                  type="button" 
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="mt-2 text-primary-600 text-xs font-semibold hover:text-primary-700 flex items-center gap-1"
+                >
+                  {isDescriptionExpanded ? t('public.showLess', { defaultValue: 'Show less' }) : t('public.showMore', { defaultValue: 'Show more' })}
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isDescriptionExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
             <span>{t('public.questionCount', { count: totalQuestions })}</span>
@@ -336,22 +350,8 @@ const PublicFormView = () => {
           >
              {currentSection.title?.trim() && <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.title}</h2>}
              {currentSection.description?.trim() && (
-               <div className="relative">
-                 <div className={`text-gray-500 text-sm whitespace-pre-wrap transition-all duration-300 ${!isDescriptionExpanded && currentSectionIndex > 0 ? 'line-clamp-2' : ''}`}>
-                   {currentSection.description}
-                 </div>
-                 {currentSectionIndex > 0 && currentSection.description.split('\\n').length > 2 && (
-                   <button 
-                     type="button" 
-                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                     className="mt-2 text-primary-600 text-xs font-semibold hover:text-primary-700 flex items-center gap-1"
-                   >
-                     {isDescriptionExpanded ? 'Show less' : 'Show more'}
-                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isDescriptionExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                       <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                     </svg>
-                   </button>
-                 )}
+               <div className="text-gray-500 text-sm whitespace-pre-wrap mt-1">
+                 {currentSection.description}
                </div>
              )}
           </motion.div>
