@@ -193,6 +193,8 @@
     "loadingForm": "Loading form...",
     "formUnavailable": "Form Unavailable",
     "pageOf": "Page {{current}} of {{total}}",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "questionCount_one": "{{count}} question",
     "questionCount_other": "{{count}} questions",
     "submitButton": "Confirm",
