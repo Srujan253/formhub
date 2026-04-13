@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Upload, X, FileText, File } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { cloudinaryAPI } from '../services/api';
 
 const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => {
+  const { t } = useTranslation();
   const [localAnswer, setLocalAnswer] = useState(answer || '');
   const [localAnswers, setLocalAnswers] = useState(
     Array.isArray(answer) ? answer : []
@@ -202,10 +204,10 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                 onChange={() => setLocalAnswer('')}
                 className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-400"
               />
-              <span className="ml-3 text-sm text-gray-400 font-medium">Other:</span>
+              <span className="ml-3 text-sm text-gray-400 font-medium">{t('public.otherLabel', { defaultValue: 'Other' })}</span>
               <input
                 type="text"
-                placeholder="Custom answer"
+                placeholder={t('public.otherPlaceholder', { defaultValue: 'Custom answer' })}
                 className="ml-2 flex-1 bg-transparent border-b border-gray-200 focus:border-primary-400 outline-none p-0.5 text-sm"
                 value={(!question.options.some(o => o.text === localAnswer) ? localAnswer : '')}
                 onChange={(e) => handleTextChange(e)}
@@ -254,10 +256,10 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                 }}
                 className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-400"
               />
-              <span className="ml-3 text-sm text-gray-400 font-medium">Other:</span>
+              <span className="ml-3 text-sm text-gray-400 font-medium">{t('public.otherLabel', { defaultValue: 'Other' })}</span>
               <input
                 type="text"
-                placeholder="Custom answer"
+                placeholder={t('public.otherPlaceholder', { defaultValue: 'Custom answer' })}
                 className="ml-2 flex-1 bg-transparent border-b border-gray-200 focus:border-primary-400 outline-none p-0.5 text-sm"
                 value={localAnswers.find(a => !question.options.some(o => o.text === a)) || ''}
                 onChange={(e) => {

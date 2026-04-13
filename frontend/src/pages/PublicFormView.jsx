@@ -341,7 +341,7 @@ const PublicFormView = () => {
         </div>
 
         {/* Section Header if it's multi-section and has title */}
-        {isMultiSection && (currentSection.title?.trim() || currentSection.description?.trim()) && (
+        {!showConfirm && isMultiSection && (currentSection.title?.trim() || currentSection.description?.trim()) && (
           <motion.div
             key={`header-${currentSectionIndex}`}
             initial={{ opacity: 0, x: 20 }}

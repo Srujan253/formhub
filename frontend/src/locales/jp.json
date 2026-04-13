@@ -185,6 +185,10 @@
     "showLess": "一部を表示",
     "questionCount_one": "{{count}} 件の質問",
     "questionCount_other": "{{count}} 件の質問",
+    "confirmTitle": "回答内容を確認してください",
+    "confirmDesc": "送信前に入力内容が正しいことをご確認ください。回答は下記から直接編集できます。",
+    "otherLabel": "その他",
+    "otherPlaceholder": "自由記入",
     "submitButton": "確認",
     "confirmSubmit": "確認して送信"
   },

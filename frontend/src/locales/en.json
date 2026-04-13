@@ -197,6 +197,10 @@
     "showLess": "Show less",
     "questionCount_one": "{{count}} question",
     "questionCount_other": "{{count}} questions",
+    "confirmTitle": "Confirm Your Responses",
+    "confirmDesc": "Please verify your information is correct before submitting. You can edit your answers directly below.",
+    "otherLabel": "Other",
+    "otherPlaceholder": "Custom answer",
     "submitButton": "Confirm",
     "confirmSubmit": "Confirm & Submit"
   },
