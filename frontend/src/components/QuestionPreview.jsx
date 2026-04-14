@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Upload, X, FileText, File } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { cloudinaryAPI } from '../services/api';
 
-const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => {
+const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confirmationMode = false }) => {
   const { t } = useTranslation();
   const [localAnswer, setLocalAnswer] = useState(answer || '');
   const [localAnswers, setLocalAnswers] = useState(
@@ -13,8 +13,35 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
   );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const isLayoutBlock = question.type === 'layout_block';
+  const canEdit = confirmationMode && !isLayoutBlock && !['section_break', 'image_section'].includes(question.type);
+
+  useEffect(() => {
+    if (!confirmationMode && isEditing) {
+      setIsEditing(false);
+    }
+  }, [confirmationMode, isEditing]);
+
+  const isReadOnly = confirmationMode && !isEditing;
+  const readOnlyInputClass = isReadOnly ? 'pointer-events-none opacity-40' : '';
+  const mutedTextClass = isReadOnly ? 'text-slate-500' : 'text-gray-800';
+  const mutedSubtextClass = isReadOnly ? 'text-slate-500' : 'text-gray-500';
+  const optionTextClass = isReadOnly ? 'text-slate-500' : 'text-gray-700';
+  const optionMutedTextClass = isReadOnly ? 'text-slate-500' : 'text-gray-400';
+  const activeOptionClass = isReadOnly
+    ? 'bg-slate-200/70 border-slate-200 shadow-none'
+    : 'bg-primary-50/80 border-primary-200 shadow-sm';
+  const inactiveOptionClass = isReadOnly
+    ? 'bg-slate-50/60 border-slate-200/60'
+    : 'bg-white/60 border-gray-100 hover:bg-gray-50/80';
+  const activeScaleClass = isReadOnly
+    ? 'bg-slate-200/80 border-slate-200 text-slate-700 shadow-none'
+    : 'bg-primary-500 border-primary-600 text-white shadow-md shadow-primary-500/30';
+  const inactiveScaleClass = isReadOnly
+    ? 'bg-slate-50/60 border-slate-200/60 text-slate-500'
+    : 'bg-white/60 border-gray-100 text-gray-600 hover:bg-gray-50';
 
   const handleTextChange = (e) => {
     setLocalAnswer(e.target.value);
@@ -79,22 +106,45 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      onClick={() => {
+        if (canEdit && !isEditing) {
+          setIsEditing(true);
+        }
+      }}
       className={`mb-4 transition-all duration-300 ${
         isLayoutBlock && question.layoutType === 'title_desc' 
-          ? 'py-6 px-6 bg-white border border-gray-100 rounded-2xl shadow-sm text-center' 
+          ? `py-6 px-6 border rounded-2xl shadow-sm text-center ${
+              isReadOnly ? 'bg-slate-50/60 border-slate-200/70 grayscale-[0.15]' : 'bg-white border-gray-100'
+            }` 
           : isLayoutBlock 
-            ? 'py-4 px-2' 
-            : `card border-l-4 ${
+            ? `py-4 px-2 ${isReadOnly ? 'grayscale-[0.15]' : ''}` 
+            : `card border-l-4 ${isReadOnly ? 'bg-slate-50/60 border-slate-200/70 grayscale-[0.15]' : ''} ${
                 isError
                   ? 'border-red-400 bg-red-50/40 shadow-md shadow-red-100/50'
                   : 'border-primary-400'
               }`
-      }`}
+      } ${isReadOnly && canEdit ? 'cursor-pointer' : ''}`}
     >
-      <div className={`${isLayoutBlock ? 'mb-2' : 'form-label text-base mb-4'} ${isError ? 'text-red-600' : 'text-gray-800'}`}>
+      <div
+        className={`${isLayoutBlock ? 'mb-2' : 'form-label text-base mb-4'} ${
+          isError ? 'text-red-600' : mutedTextClass
+        }`}
+      >
         <div className={`flex items-start ${isLayoutBlock && question.layoutType === 'title_desc' ? 'justify-center text-center' : ''}`}>
           <div 
-            className={`prose prose-sm max-w-none break-words ${isLayoutBlock && question.layoutType === 'title_desc' ? 'prose-p:text-2xl prose-p:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h1:font-extrabold text-gray-900 border-b border-gray-100 pb-3 w-full' : isLayoutBlock ? 'prose-p:text-2xl prose-p:font-bold prose-h1:text-2xl prose-h2:text-xl w-full' : ''}`}
+            className={`prose prose-sm max-w-none break-words ${
+              isLayoutBlock && question.layoutType === 'title_desc'
+                ? `prose-p:text-2xl prose-p:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h1:font-extrabold ${
+                    isReadOnly ? 'text-slate-500 border-slate-200/70' : 'text-gray-900 border-gray-100'
+                  } border-b pb-3 w-full`
+                : isLayoutBlock
+                  ? `prose-p:text-2xl prose-p:font-bold prose-h1:text-2xl prose-h2:text-xl w-full ${
+                      isReadOnly ? 'text-slate-500' : ''
+                    }`
+                  : isReadOnly
+                    ? 'text-slate-500'
+                    : ''
+            }`}
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.title || '') }}
           />
           {!isLayoutBlock && question.required && <span className="text-red-400 ml-1 mt-1">*</span>}
@@ -103,7 +153,11 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
 
       {question.description && (
         <div
-          className={`prose prose-sm max-w-none font-normal leading-relaxed mb-4 break-words ${isLayoutBlock && question.layoutType === 'title_desc' ? 'text-gray-500 mt-3 text-base text-center w-full' : 'text-gray-500'}`}
+          className={`prose prose-sm max-w-none font-normal leading-relaxed mb-4 break-words ${
+            isLayoutBlock && question.layoutType === 'title_desc'
+              ? `${mutedSubtextClass} mt-3 text-base text-center w-full`
+              : mutedSubtextClass
+          }`}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(question.description) }}
         />
       )}
@@ -126,7 +180,9 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                 </svg>
               </div>
               <div className="flex flex-col pr-8">
-                <span className="text-sm font-semibold text-gray-700">Attached Document</span>
+                <span className={`text-sm font-semibold ${isReadOnly ? 'text-slate-500' : 'text-gray-700'}`}>
+                  Attached Document
+                </span>
                 <button 
                   onClick={(e) => {
                     e.preventDefault();
@@ -154,7 +210,8 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
           value={localAnswer}
           onChange={handleTextChange}
           placeholder="Your answer"
-          className={`form-input ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
+          readOnly={isReadOnly}
+          className={`form-input ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
         />
       )}
 
@@ -164,7 +221,8 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
           onChange={handleTextChange}
           placeholder="Your answer"
           rows="4"
-          className={`form-input resize-none ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
+          readOnly={isReadOnly}
+          className={`form-input resize-none ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
         />
       )}
 
@@ -173,10 +231,12 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
           {question.options.map((option) => (
             <label
               key={option.id}
-              className={`flex items-center p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
+              className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
+                isReadOnly ? 'cursor-default pointer-events-none' : 'cursor-pointer'
+              } ${
                 localAnswer === option.text
-                  ? 'bg-primary-50/80 border-primary-200 shadow-sm'
-                  : 'bg-white/60 border-gray-100 hover:bg-gray-50/80'
+                  ? activeOptionClass
+                  : inactiveOptionClass
               }`}
             >
               <input
@@ -185,30 +245,45 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                 value={option.text}
                 checked={localAnswer === option.text}
                 onChange={handleTextChange}
-                className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-400"
+                disabled={isReadOnly}
+                className={`w-4 h-4 border-gray-300 ${
+                  isReadOnly ? 'text-slate-500 focus:ring-slate-300' : 'text-primary-600 focus:ring-primary-400'
+                } ${readOnlyInputClass}`}
               />
-              <span className="ml-3 text-sm text-gray-700 font-medium">{option.text}</span>
+              <span className={`ml-3 text-sm font-medium ${optionTextClass}`}>{option.text}</span>
             </label>
           ))}
           {question.allowOther && (
-            <div className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
-              localAnswer !== '' && !question.options.some(o => o.text === localAnswer)
-                ? 'bg-primary-50/80 border-primary-200 shadow-sm'
-                : 'bg-white/60 border-gray-100'
-            }`}>
+            <div
+              className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
+                isReadOnly ? 'pointer-events-none' : ''
+              } ${
+                localAnswer !== '' && !question.options.some(o => o.text === localAnswer)
+                  ? activeOptionClass
+                  : inactiveOptionClass
+              }`}
+            >
               <input
                 type="radio"
                 name={question.id}
                 value="other"
                 checked={localAnswer !== '' && !question.options.some(o => o.text === localAnswer)}
                 onChange={() => setLocalAnswer('')}
-                className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-400"
+                disabled={isReadOnly}
+                className={`w-4 h-4 border-gray-300 ${
+                  isReadOnly ? 'text-slate-500 focus:ring-slate-300' : 'text-primary-600 focus:ring-primary-400'
+                } ${readOnlyInputClass}`}
               />
-              <span className="ml-3 text-sm text-gray-400 font-medium">{t('public.otherLabel', { defaultValue: 'Other' })}</span>
+              <span className={`ml-3 text-sm font-medium ${optionMutedTextClass}`}>
+                {t('public.otherLabel', { defaultValue: 'Other' })}
+              </span>
               <input
                 type="text"
                 placeholder={t('public.otherPlaceholder', { defaultValue: 'Custom answer' })}
-                className="ml-2 flex-1 bg-transparent border-b border-gray-200 focus:border-primary-400 outline-none p-0.5 text-sm"
+                readOnly={isReadOnly}
+                className={`ml-2 flex-1 bg-transparent border-b border-gray-200 outline-none p-0.5 text-sm ${
+                  isReadOnly ? 'border-slate-200 text-slate-500' : 'focus:border-primary-400'
+                } ${readOnlyInputClass}`}
                 value={(!question.options.some(o => o.text === localAnswer) ? localAnswer : '')}
                 onChange={(e) => handleTextChange(e)}
               />
@@ -222,27 +297,36 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
           {question.options.map((option) => (
             <label
               key={option.id}
-              className={`flex items-center p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
+              className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
+                isReadOnly ? 'cursor-default pointer-events-none' : 'cursor-pointer'
+              } ${
                 localAnswers.includes(option.text)
-                  ? 'bg-primary-50/80 border-primary-200 shadow-sm'
-                  : 'bg-white/60 border-gray-100 hover:bg-gray-50/80'
+                  ? activeOptionClass
+                  : inactiveOptionClass
               }`}
             >
               <input
                 type="checkbox"
                 checked={localAnswers.includes(option.text)}
                 onChange={() => handleCheckboxChange(option.text)}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-400"
+                disabled={isReadOnly}
+                className={`w-4 h-4 border-gray-300 rounded ${
+                  isReadOnly ? 'text-slate-500 focus:ring-slate-300' : 'text-primary-600 focus:ring-primary-400'
+                } ${readOnlyInputClass}`}
               />
-              <span className="ml-3 text-sm text-gray-700 font-medium">{option.text}</span>
+              <span className={`ml-3 text-sm font-medium ${optionTextClass}`}>{option.text}</span>
             </label>
           ))}
           {question.allowOther && (
-            <div className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
-              localAnswers.some(a => !question.options.some(o => o.text === a))
-                ? 'bg-primary-50/80 border-primary-200 shadow-sm'
-                : 'bg-white/60 border-gray-100'
-            }`}>
+            <div
+              className={`flex items-center p-3 rounded-xl transition-all duration-200 border ${
+                isReadOnly ? 'pointer-events-none' : ''
+              } ${
+                localAnswers.some(a => !question.options.some(o => o.text === a))
+                  ? activeOptionClass
+                  : inactiveOptionClass
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={localAnswers.some(a => !question.options.some(o => o.text === a))}
@@ -254,13 +338,21 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                     onChange(question.id, updated);
                   }
                 }}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-400"
+                disabled={isReadOnly}
+                className={`w-4 h-4 border-gray-300 rounded ${
+                  isReadOnly ? 'text-slate-500 focus:ring-slate-300' : 'text-primary-600 focus:ring-primary-400'
+                } ${readOnlyInputClass}`}
               />
-              <span className="ml-3 text-sm text-gray-400 font-medium">{t('public.otherLabel', { defaultValue: 'Other' })}</span>
+              <span className={`ml-3 text-sm font-medium ${optionMutedTextClass}`}>
+                {t('public.otherLabel', { defaultValue: 'Other' })}
+              </span>
               <input
                 type="text"
                 placeholder={t('public.otherPlaceholder', { defaultValue: 'Custom answer' })}
-                className="ml-2 flex-1 bg-transparent border-b border-gray-200 focus:border-primary-400 outline-none p-0.5 text-sm"
+                readOnly={isReadOnly}
+                className={`ml-2 flex-1 bg-transparent border-b border-gray-200 outline-none p-0.5 text-sm ${
+                  isReadOnly ? 'border-slate-200 text-slate-500' : 'focus:border-primary-400'
+                } ${readOnlyInputClass}`}
                 value={localAnswers.find(a => !question.options.some(o => o.text === a)) || ''}
                 onChange={(e) => {
                   const otherVal = e.target.value;
@@ -279,7 +371,8 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
         <select
           value={localAnswer}
           onChange={handleSelectChange}
-          className={`form-input ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
+          disabled={isReadOnly}
+          className={`form-input ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
         >
           <option value="">Select an option</option>
           {question.options.map((option) => (
@@ -292,7 +385,11 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
 
       {question.type === 'linear_scale' && (
         <div className="mt-4 px-2">
-          <div className="flex justify-between items-end mb-3 px-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <div
+            className={`flex justify-between items-end mb-3 px-1 text-xs font-semibold uppercase tracking-wider ${
+              isReadOnly ? 'text-slate-500' : 'text-gray-400'
+            }`}
+          >
             <span>{question.minLabel || question.minScale}</span>
             <span>{question.maxLabel || question.maxScale}</span>
           </div>
@@ -305,11 +402,12 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                 key={val}
                 type="button"
                 onClick={() => handleSelectChange({ target: { value: val } })}
+                disabled={isReadOnly}
                 className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300 border ${
                   Number(localAnswer) === val
-                    ? 'bg-primary-500 border-primary-600 text-white shadow-md shadow-primary-500/30'
-                    : 'bg-white/60 border-gray-100 text-gray-600 hover:bg-gray-50'
-                }`}
+                    ? activeScaleClass
+                    : inactiveScaleClass
+                } ${readOnlyInputClass}`}
               >
                 <span className="text-sm font-bold">{val}</span>
               </button>
@@ -333,9 +431,9 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
           <table className="w-full text-left border-separate border-spacing-y-2">
             <thead>
               <tr>
-                <th className="p-3 text-xs font-bold text-gray-400 uppercase tracking-widest"></th>
+                <th className={`p-3 text-xs font-bold uppercase tracking-widest ${isReadOnly ? 'text-slate-400' : 'text-gray-400'}`}></th>
                 {question.columns?.map((col, i) => (
-                  <th key={i} className="p-3 text-center text-xs font-bold text-gray-500 uppercase">
+                  <th key={i} className={`p-3 text-center text-xs font-bold uppercase ${isReadOnly ? 'text-slate-500' : 'text-gray-500'}`}>
                     {col}
                   </th>
                 ))}
@@ -344,7 +442,9 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
             <tbody>
               {question.rows?.map((row, rowIdx) => (
                 <tr key={rowIdx} className="bg-white/40 backdrop-blur-sm rounded-xl border border-gray-100 hover:bg-white/60 transition-colors">
-                  <td className="p-3 text-sm font-semibold text-gray-700 whitespace-nowrap border-l border-t border-b border-gray-50 rounded-l-xl">
+                  <td className={`p-3 text-sm font-semibold whitespace-nowrap border-l border-t border-b border-gray-50 rounded-l-xl ${
+                    isReadOnly ? 'text-slate-500' : 'text-gray-700'
+                  }`}>
                     {row}
                   </td>
                   {question.columns?.map((col, colIdx) => {
@@ -372,7 +472,10 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                             setLocalAnswer(newAnswer);
                             onChange(question.id, newAnswer);
                           }}
-                          className="w-4 h-4 text-primary-600 focus:ring-primary-400 border-gray-300 transition-all"
+                          disabled={isReadOnly}
+                          className={`w-4 h-4 border-gray-300 transition-all ${
+                            isReadOnly ? 'text-slate-500 focus:ring-slate-300' : 'text-primary-600 focus:ring-primary-400'
+                          } ${readOnlyInputClass}`}
                         />
                       </td>
                     );
@@ -397,7 +500,9 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
         <div className="mt-4">
           {!localAnswer ? (
              <div className="w-full relative">
-               <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all group ${
+               <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl transition-all group ${
+                 isReadOnly ? 'pointer-events-none opacity-40 cursor-default' : 'cursor-pointer'
+               } ${
                  isError ? 'border-red-300 bg-red-50/20' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100/50'
                }`}>
                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
@@ -419,13 +524,15 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                    className="hidden" 
                    accept="image/*,.pdf,.doc,.docx" 
                    onChange={handleFileUpload}
-                   disabled={uploading}
+                   disabled={uploading || isReadOnly}
                  />
                </label>
                {uploadError && <p className="text-red-500 text-xs mt-2 font-medium bg-red-50 p-2 rounded">{uploadError}</p>}
              </div>
           ) : (
-             <div className="relative group p-4 border border-gray-200 rounded-xl bg-white max-w-sm flex items-center justify-between shadow-sm">
+             <div className={`relative group p-4 border border-gray-200 rounded-xl bg-white max-w-sm flex items-center justify-between shadow-sm ${
+               isReadOnly ? 'opacity-60' : ''
+             }`}>
                <div className="flex items-center gap-4 overflow-hidden">
                  {localAnswer.includes('/image/upload') || localAnswer.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50 flex items-center justify-center">
@@ -437,7 +544,10 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                    </div>
                  )}
                  <div className="flex flex-col min-w-0">
-                   <p className="text-sm font-semibold text-gray-800 truncate" title={localAnswer.split('/').pop()}>
+                  <p
+                    className={`text-sm font-semibold truncate ${isReadOnly ? 'text-slate-500' : 'text-gray-800'}`}
+                    title={localAnswer.split('/').pop()}
+                  >
                      {localAnswer.split('/').pop().substring(0, 20)}...
                    </p>
                    <button 
@@ -449,7 +559,9 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                          window.open(localAnswer, '_blank');
                        }
                      }}
-                     className="text-xs text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 mt-1 hover:underline text-left"
+                     className={`text-xs font-medium inline-flex items-center gap-1 mt-1 text-left ${
+                       isReadOnly ? 'text-slate-500 pointer-events-none' : 'text-primary-600 hover:text-primary-700 hover:underline'
+                     }`}
                    >
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
@@ -462,7 +574,10 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile }) => 
                <button 
                  type="button" 
                  onClick={removeFile}
-                 className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-md transition-colors ml-2 shrink-0"
+                 disabled={isReadOnly}
+                 className={`p-1.5 text-gray-400 rounded-md transition-colors ml-2 shrink-0 ${
+                   isReadOnly ? 'pointer-events-none opacity-40' : 'hover:bg-red-50 hover:text-red-500'
+                 }`}
                  title="Remove file"
                >
                  <X size={18} />

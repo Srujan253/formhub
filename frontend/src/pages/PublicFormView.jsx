@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react';
+import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft, HelpCircle, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
@@ -279,6 +279,12 @@ const PublicFormView = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50 py-8 px-4">
+      {showConfirm && (
+        <div className="fixed top-4 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-white/50 shadow-md backdrop-blur-md text-xs font-semibold text-slate-600">
+          <Eye size={14} className="text-slate-500" />
+          <span>{t('public.reviewingBadge', { defaultValue: 'Reviewing' })}</span>
+        </div>
+      )}
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -365,61 +371,77 @@ const PublicFormView = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-20">
-          {showConfirm ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
-            >
-              <div className="card text-center py-6 border-b-4 border-emerald-500 bg-emerald-50/50">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('public.confirmTitle', { defaultValue: 'Confirm Your Responses' })}</h2>
-                <p className="text-gray-600 text-sm">{t('public.confirmDesc', { defaultValue: 'Please verify your information is correct before submitting. You can edit your answers directly below.' })}</p>
-              </div>
-              
-              {form.sections.map((section, sIndex) => (
-                <div key={section.id || sIndex} className="space-y-4 mb-8">
-                  {(section.title || section.description) && (
-                    <div className="card bg-gray-50/50 border border-gray-100">
-                      {section.title && <h3 className="text-lg font-bold text-gray-900 mb-1">{section.title}</h3>}
-                      {section.description && <p className="text-sm text-gray-600 whitespace-pre-wrap">{section.description}</p>}
-                    </div>
-                  )}
-                  {section.items.map((item) => (
-                    <QuestionPreview
-                      key={item.id}
-                      question={item}
-                      answer={answers[item.id]}
-                      onChange={handleAnswerChange}
-                      errors={errors}
-                      onViewFile={setViewingFile}
-                    />
-                  ))}
-                </div>
-              ))}
-            </motion.div>
-          ) : (
-            <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync" initial={false}>
+            {showConfirm ? (
               <motion.div
-                key={currentSectionIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
+                key="confirm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+                className="space-y-8"
               >
-                {currentSection.items.map((item) => (
-                  <QuestionPreview
-                    key={item.id}
-                    question={item}
-                    answer={answers[item.id]}
-                    onChange={handleAnswerChange}
-                    errors={errors}
-                    onViewFile={setViewingFile}
-                  />
+                <div className="card text-center py-6 border-b-4 border-emerald-500 bg-emerald-50/50">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('public.confirmTitle', { defaultValue: 'Confirm Your Responses' })}</h2>
+                  <p className="text-gray-600 text-sm">{t('public.confirmDesc', { defaultValue: 'Please verify your information is correct before submitting.' })}</p>
+                </div>
+                
+                {form.sections.map((section, sIndex) => (
+                  <div key={section.id || sIndex} className="space-y-4 mb-8">
+                    {(section.title || section.description) && (
+                      <div className="card bg-gray-50/50 border border-gray-100">
+                        {section.title && <h3 className="text-lg font-bold text-gray-900 mb-1">{section.title}</h3>}
+                        {section.description && <p className="text-sm text-gray-600 whitespace-pre-wrap">{section.description}</p>}
+                      </div>
+                    )}
+                    {section.items.map((item) => (
+                      <QuestionPreview
+                        key={item.id}
+                        question={item}
+                        answer={answers[item.id]}
+                        onChange={handleAnswerChange}
+                        errors={errors}
+                        onViewFile={setViewingFile}
+                        confirmationMode={true}
+                      />
+                    ))}
+                  </div>
                 ))}
               </motion.div>
-            </AnimatePresence>
-          )}
+            ) : (
+              <motion.div
+                key="active"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+                className="space-y-4"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSectionIndex}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    {currentSection.items.map((item) => (
+                      <QuestionPreview
+                        key={item.id}
+                        question={item}
+                        answer={answers[item.id]}
+                        onChange={handleAnswerChange}
+                        errors={errors}
+                        onViewFile={setViewingFile}
+                        confirmationMode={false}
+                      />
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex justify-between items-center pt-6 gap-4">
             {showConfirm ? (
