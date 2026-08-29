@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserCheck, UserX, Shield, ShieldAlert, UserPlus, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import { TableSkeleton } from '../components/Skeleton';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
@@ -102,8 +103,8 @@ const AdminPanel = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-         <div className="w-8 h-8 rounded-full border-4 border-primary-500/30 border-t-primary-500 animate-spin"></div>
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-6">
+        <TableSkeleton rows={8} cols={5} />
       </div>
     );
   }

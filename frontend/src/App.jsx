@@ -13,6 +13,7 @@ import RegisterPage from './pages/RegisterPage';
 import PendingReview from './pages/PendingReview';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminPanel from './pages/AdminPanel';
+import EmailGroupsPage from './pages/EmailGroupsPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -38,6 +39,7 @@ const AppContent = () => {
             <Route path="/form/:id" element={<ProtectedRoute><FormViewer /></ProtectedRoute>} />
             <Route path="/s/:token" element={<PublicFormView />} />
             <Route path="/responses/:formId" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ResponsesDashboard /></ProtectedRoute>} />
+            <Route path="/email-groups" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><EmailGroupsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AnimatePresence>

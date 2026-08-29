@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
+import { PublicFormSkeleton } from '../components/Skeleton';
 
 const FileModal = ({ url, onClose }) => {
   const { t } = useTranslation();
@@ -235,14 +236,7 @@ const PublicFormView = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600 animate-spin inline-block"></div>
-          <p className="text-gray-400 mt-4 text-sm font-medium">{t('public.loadingForm')}</p>
-        </div>
-      </div>
-    );
+    return <PublicFormSkeleton />;
   }
 
   if (error && !form) {

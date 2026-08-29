@@ -74,4 +74,12 @@ export const cloudinaryAPI = {
   },
 };
 
+// Email Groups (Shortcuts) API
+export const emailGroupsAPI = {
+  getAll: () => api.get('/email-groups'),
+  create: (data) => api.post('/email-groups', data),
+  update: (id, data) => api.put(`/email-groups/${id}`, data),
+  delete: (id) => api.delete(`/email-groups/${id}`),
+};
+
 export default api;

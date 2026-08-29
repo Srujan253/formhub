@@ -7,6 +7,7 @@ import { formAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import FormCard from '../components/FormCard';
+import { FormGridSkeleton } from '../components/Skeleton';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -115,16 +116,7 @@ const HomePage = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-20">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-            className="inline-block"
-          >
-            <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
-          </motion.div>
-          <p className="text-gray-400 mt-4 text-sm font-medium">{t('home.loading')}</p>
-        </div>
+        <FormGridSkeleton count={6} />
       ) : forms.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

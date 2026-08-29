@@ -7,6 +7,7 @@ import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, BarChart, Bar, LabelList } from 'recharts';
+import { DashboardSkeleton } from '../components/Skeleton';
 
   // 15 color variations with shades of purple, blue, and green
   const RADIO_COLORS = [
@@ -540,18 +541,7 @@ const extractText = (html) => {
   }, [allQuestions]);
 
   if (loading) {
-    return (
-      <div className="text-center py-20">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          className="inline-block"
-        >
-          <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
-        </motion.div>
-        <p className="text-gray-400 mt-4 text-sm font-medium">{t('dashboard.loadingResponses')}</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!form) {

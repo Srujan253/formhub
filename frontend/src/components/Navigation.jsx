@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, LogOut, LogIn, UserPlus, Sparkles, Languages, Check, ShieldAlert } from 'lucide-react';
+import { FileText, Plus, LogOut, LogIn, UserPlus, Sparkles, Languages, Check, ShieldAlert, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useConfigStore } from '../store/useConfigStore';
@@ -100,6 +100,12 @@ const Navigation = () => {
                   <FileText size={16} />
                   <span className="hidden sm:inline">{t('header.myForms')}</span>
                 </Link>
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <Link to="/email-groups" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm !text-primary-600 !bg-primary-50 hover:!bg-primary-100 !border-primary-100">
+                    <Users size={16} />
+                    <span className="hidden sm:inline">Groups</span>
+                  </Link>
+                )}
                 {user.role !== 'staff' && (
                   <Link to="/create" className="flex items-center gap-2 btn-primary text-xs sm:text-sm">
                     <Plus size={16} />

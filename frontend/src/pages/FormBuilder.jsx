@@ -13,6 +13,7 @@ import ImageUpload from '../components/ImageUpload';
 import RichTextEditor from '../components/RichTextEditor';
 import MediaUpload from '../components/MediaUpload';
 import ShareModal from '../components/ShareModal';
+import { FormBuilderSkeleton } from '../components/Skeleton';
 import FormViewer from './FormViewer';
 import { useBeforeUnload } from 'react-use';
 
@@ -374,12 +375,7 @@ const FormBuilder = () => {
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-20 flex flex-col items-center">
-        <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600 animate-spin"></div>
-        <p className="text-gray-400 mt-4 text-sm font-medium">Loading form...</p>
-      </div>
-    );
+    return <FormBuilderSkeleton />;
   }
 
   return (

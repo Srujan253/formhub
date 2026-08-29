@@ -7,6 +7,7 @@ import responseRoutes from './routes/responseRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import emailGroupRoutes from './routes/emailGroupRoutes.js';
 import { sendInvites } from './controllers/emailController.js';
 import { protect } from './middleware/authMiddleware.js';
 
@@ -72,7 +73,8 @@ app.use('/api', formRoutes);
 app.use('/api', responseRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api', uploadRoutes); // Register /api/upload
+app.use('/api', uploadRoutes);
+app.use('/api', emailGroupRoutes);
 
 // Email route — defined directly to avoid Express 5 router import issues
 app.post('/api/email/invite', protect, sendInvites);

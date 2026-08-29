@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Send, AlertCircle, ArrowLeft, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
+import { PublicFormSkeleton } from '../components/Skeleton';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
@@ -171,18 +172,7 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-20">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          className="inline-block"
-        >
-          <div className="w-12 h-12 rounded-full border-[3px] border-primary-200 border-t-primary-600"></div>
-        </motion.div>
-        <p className="text-gray-400 mt-4 text-sm font-medium">Loading form...</p>
-      </div>
-    );
+    return <PublicFormSkeleton />;
   }
 
   if (!form) {
