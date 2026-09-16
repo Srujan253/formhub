@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Send, AlertCircle, Sparkles, User, ChevronRight, ChevronLeft, HelpCircle, Eye } from 'lucide-react';
+import { Send, AlertCircle, Activity, User, ChevronRight, ChevronLeft, HelpCircle, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { formAPI, responseAPI } from '../services/api';
@@ -282,10 +282,10 @@ const PublicFormView = () => {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-sm shadow-primary-500/25">
-              <Sparkles size={13} className="text-white" />
+            <div className="w-6 h-6 bg-primary-600 rounded-md flex items-center justify-center text-white shadow-sm">
+              <Activity size={13} className="stroke-[2.5]" />
             </div>
-            <span className="text-sm font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">{t('appName', { defaultValue: 'Pulse' })}</span>
+            <span className="text-sm font-bold text-gray-900 tracking-tight">{t('appName', { defaultValue: 'Pulse' })}</span>
           </div>
           <div className="flex items-center gap-3">
             <button

@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Send, AlertCircle, ArrowLeft, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
+import { useTranslation } from 'react-i18next';
 import { PublicFormSkeleton } from '../components/Skeleton';
 import { formAPI, responseAPI } from '../services/api';
 import QuestionPreview from '../components/QuestionPreview';
 
 const FileModal = ({ url, onClose }) => {
+  const { t } = useTranslation();
   if (!url) return null;
   const isImg = url.includes('/image/upload') || url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
   
@@ -20,14 +22,14 @@ const FileModal = ({ url, onClose }) => {
         className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col"
       >
          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-           <h3 className="font-semibold text-gray-800">File Preview</h3>
+           <h3 className="font-semibold text-gray-800">{t('dashboard.filePreview', { defaultValue: 'File Preview' })}</h3>
            <div className="flex items-center gap-2">
              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                  <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                </svg>
-               Open Tab
+               {t('dashboard.openTab', { defaultValue: 'Open Tab' })}
              </a>
              <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -41,13 +43,13 @@ const FileModal = ({ url, onClose }) => {
              <img src={url} alt="Preview" className="max-w-full max-h-[calc(90vh-100px)] object-contain rounded drop-shadow-sm" />
            ) : (
              url.endsWith('.pdf') ? (
-               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title="PDF Preview" />
+               <iframe src={url + '#toolbar=0'} className="w-full h-[calc(90vh-100px)] rounded shadow-sm border border-gray-200 bg-white" title={t('dashboard.filePreview', { defaultValue: 'PDF Preview' })} />
              ) : (
                <div className="text-center bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-sm">
                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                 <p className="text-gray-600 font-medium mb-3">No preview available for this file type.</p>
+                 <p className="text-gray-600 font-medium mb-3">{t('dashboard.noPreview', { defaultValue: 'No preview available for this file type.' })}</p>
                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-                   Download / Open File
+                   {t('dashboard.downloadOpen', { defaultValue: 'Download / Open File' })}
                  </a>
                </div>
              )
@@ -59,6 +61,7 @@ const FileModal = ({ url, onClose }) => {
 };
 
 const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState(previewData);
@@ -85,7 +88,7 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
       setForm(response.data.data);
       setError('');
     } catch (err) {
-      setError('Failed to load form');
+      setError(t('public.formNotAvailable', { defaultValue: 'Failed to load form' }));
       console.error(err);
     } finally {
       setLoading(false);
@@ -131,7 +134,7 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
     e.preventDefault();
 
     if (!validateForm()) {
-      setError('Please fill in all required fields');
+      setError(t('public.fillRequired', { defaultValue: 'Please fill in all required fields' }));
       return;
     }
 
@@ -164,7 +167,7 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
         navigate('/');
       }, 3000);
     } catch (err) {
-      setError('Failed to submit form. Please try again.');
+      setError(t('public.submitFailed', { defaultValue: 'Failed to submit form. Please try again.' }));
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -184,10 +187,10 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
           className="card text-center py-16"
         >
           <AlertCircle size={40} className="mx-auto text-gray-300 mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Form not found</h2>
-          <p className="text-gray-500 mb-6 text-sm">The form you're looking for doesn't exist</p>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{t('dashboard.formNotFound', { defaultValue: 'Form not found' })}</h2>
+          <p className="text-gray-500 mb-6 text-sm">{t('public.formNotAvailable', { defaultValue: "The form you're looking for doesn't exist" })}</p>
           <button onClick={() => navigate('/')} className="btn-primary">
-            Go to Home
+            {t('dashboard.backToForms', { defaultValue: 'Go to Home' })}
           </button>
         </motion.div>
       </div>
@@ -228,8 +231,8 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
               />
             </motion.svg>
           </motion.div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Response Submitted!</h2>
-          <p className="text-gray-500 text-sm">Thank you for your response. Redirecting...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('public.thankYou', { defaultValue: 'Response Submitted!' })}</h2>
+          <p className="text-gray-500 text-sm">{t('public.success', { defaultValue: 'Thank you for your response. Redirecting...' })}</p>
         </motion.div>
       </div>
     );
@@ -250,7 +253,7 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium mb-6"
         >
           <ArrowLeft size={16} />
-          Back
+          {t('common.back', { defaultValue: 'Back' })}
         </motion.button>
       )}
 
@@ -336,12 +339,12 @@ const FormViewer = ({ previewData = null, isPreviewMode = false }) => {
           {submitting ? (
             <>
               <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
-              Submitting...
+              {t('public.submitting', { defaultValue: 'Submitting...' })}
             </>
           ) : (
             <>
               <Send size={18} />
-              Submit Response
+              {t('public.submit', { defaultValue: 'Submit Response' })}
             </>
           )}
         </motion.button>

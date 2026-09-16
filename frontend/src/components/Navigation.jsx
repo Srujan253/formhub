@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, LogOut, LogIn, UserPlus, Sparkles, Languages, Check, ShieldAlert, Users } from 'lucide-react';
+import { FileText, Plus, LogOut, LogIn, UserPlus, Activity, Languages, Check, ShieldAlert, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useConfigStore } from '../store/useConfigStore';
@@ -25,23 +25,14 @@ const Navigation = () => {
   };
 
   return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="bg-white/70 backdrop-blur-xl border-b border-gray-100/80 sticky top-0 z-[60] shadow-sm"
-    >
+    <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-[60] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <motion.div
-              whileHover={{ rotate: 12, scale: 1.1 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-              className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md shadow-primary-500/25" 
-            >
-              <Sparkles size={18} className="text-white" />
-            </motion.div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
+            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-primary-700 transition-colors">
+              <Activity size={18} className="stroke-[2.5]" />
+            </div>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">
               {t('appName', { defaultValue: 'Pulse' })}
             </span>
           </Link>
@@ -52,7 +43,7 @@ const Navigation = () => {
               <button 
                 onClick={() => setShowLangMenu(!showLangMenu)}
                 className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-50/80 text-gray-500 hover:text-gray-800 hover:bg-gray-100 border border-gray-200/50 backdrop-blur-sm transition-all"
-                title="Change Language"
+                title={t('header.changeLanguage', { defaultValue: 'Change Language' })}
               >
                 <Languages size={18} />
               </button>
@@ -103,7 +94,7 @@ const Navigation = () => {
                 {(user.role === 'admin' || user.role === 'manager') && (
                   <Link to="/email-groups" className="flex items-center gap-2 btn-secondary text-xs sm:text-sm !text-primary-600 !bg-primary-50 hover:!bg-primary-100 !border-primary-100">
                     <Users size={16} />
-                    <span className="hidden sm:inline">Groups</span>
+                    <span className="hidden sm:inline">{t('header.emailGroups', { defaultValue: 'Groups' })}</span>
                   </Link>
                 )}
                 {user.role !== 'staff' && (
@@ -137,7 +128,7 @@ const Navigation = () => {
           </div>
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 

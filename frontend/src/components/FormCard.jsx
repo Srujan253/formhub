@@ -119,20 +119,20 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
 
         {/* Banner image if present */}
         {form.headerImage && (
-          <div className="h-24 w-full mb-4 -mt-2 rounded-xl overflow-hidden border border-gray-100/50 shadow-inner bg-gray-50/50 flex items-center justify-center">
+          <div className="h-32 w-full mb-4 -mt-2 rounded-xl overflow-hidden border border-gray-100/80 bg-white/90 shadow-sm flex items-center justify-center p-2">
             <img 
               src={form.headerImage} 
               alt={form.title} 
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full object-contain rounded-lg"
             />
           </div>
         )}
 
         {/* Header */}
-        <div className="mb-4">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className={`text-lg font-bold transition-colors line-clamp-1 ${
-              isActive ? 'text-gray-900 group-hover:text-primary-700' : 'text-gray-500'
+        <div className="mb-3">
+          <div className="flex items-start justify-between mb-1.5">
+            <h3 className={`text-base font-bold transition-colors line-clamp-1 ${
+              isActive ? 'text-gray-900 group-hover:text-primary-600' : 'text-gray-500'
             }`}>
               {form.title}
             </h3>
@@ -159,109 +159,109 @@ const FormCard = ({ form, index = 0, onFormUpdate, onFormDelete }) => {
           </span>
         </div>
 
-        {/* Toggle + Share + Delete row */}
-        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100/80">
-          {/* Active/Inactive Toggle */}
+        {/* Toggle + Share + Duplicate + Delete toolbar */}
+        <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
+          {/* Active/Inactive Toggle - Larger and tactile */}
           <motion.button
-            whileTap={{ scale: canEditOrDelete ? 0.95 : 1 }}
+            whileHover={canEditOrDelete ? { scale: 1.02 } : {}}
+            whileTap={canEditOrDelete ? { scale: 0.96 } : {}}
             onClick={canEditOrDelete ? handleToggleActive : (e) => e.stopPropagation()}
             disabled={toggling || !canEditOrDelete}
-            className={`flex items-center gap-2 ${canEditOrDelete ? 'cursor-pointer group/toggle' : 'cursor-default'}`}
-            title={isActive ? t('home.deactivateForm') : t('home.activateForm')}
+            className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl transition-all ${
+              canEditOrDelete ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'
+            }`}
+            title={isActive ? t('home.deactivateForm', { defaultValue: 'Deactivate form' }) : t('home.activateForm', { defaultValue: 'Activate form' })}
           >
-            <div className={`relative w-10 h-[22px] rounded-full transition-all duration-400 ease-in-out ${
+            <div className={`relative w-12 h-[26px] rounded-full transition-colors duration-300 ease-in-out p-[2px] ${
               isActive ? 'bg-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-gray-300'
             }`}>
               <motion.div
                 layout
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className={`absolute top-[2px] w-[18px] h-[18px] bg-white rounded-full shadow-sm ${
-                  isActive ? 'left-[20px]' : 'left-[2px]'
+                className={`w-[22px] h-[22px] bg-white rounded-full shadow-sm transition-all ${
+                  isActive ? 'ml-auto' : 'ml-0'
                 }`}
               />
             </div>
-            <span className={`text-xs font-semibold transition-colors ${
-              isActive ? 'text-emerald-600' : 'text-gray-400'
+            <span className={`text-xs sm:text-sm font-bold tracking-tight select-none transition-colors ${
+              isActive ? 'text-emerald-700' : 'text-gray-500'
             }`}>
-              {toggling ? '...' : isActive ? t('home.active') : t('home.inactive')}
+              {toggling ? '...' : isActive ? t('home.active', { defaultValue: 'Active' }) : t('home.inactive', { defaultValue: 'Inactive' })}
             </span>
           </motion.button>
 
-          <div className="flex-1" />
-
-          {/* Share button */}
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={(e) => { e.stopPropagation(); setShowInviteModal(true); }}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-50/80 text-primary-600
-                       hover:bg-primary-100 transition-all duration-300"
-            title={t('home.inviteViaEmail')}
-          >
-            <Share2 size={14} />
-          </motion.button>
-          
-          {/* Duplicate button */}
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={canEditOrDelete ? handleDuplicate : (e) => e.stopPropagation()}
-            disabled={duplicating || !canEditOrDelete}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 
-                       ${canEditOrDelete 
-                         ? 'bg-amber-50/80 text-amber-500 hover:bg-amber-100 hover:text-amber-600' 
-                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-            title={t('home.duplicateForm')}
-          >
-            {duplicating ? (
-              <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-            ) : (
-              <Copy size={14} />
-            )}
-          </motion.button>
-
-          {/* Delete button */}
-          {canEditOrDelete && (
+          {/* Action icon buttons toolbar */}
+          <div className="flex items-center gap-1.5">
+            {/* Share button */}
             <motion.button
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
-              onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50/80 text-red-400
-                         hover:bg-red-100 hover:text-red-600 transition-all duration-300"
-              title={t('home.deleteForm')}
+              onClick={(e) => { e.stopPropagation(); setShowInviteModal(true); }}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors shadow-sm"
+              title={t('home.inviteViaEmail', { defaultValue: 'Invite via email' })}
             >
-              <Trash2 size={14} />
+              <Share2 size={16} />
             </motion.button>
-          )}
+            
+            {/* Duplicate button */}
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={canEditOrDelete ? handleDuplicate : (e) => e.stopPropagation()}
+              disabled={duplicating || !canEditOrDelete}
+              className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors shadow-sm ${
+                canEditOrDelete 
+                  ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+              title={t('home.duplicateForm', { defaultValue: 'Duplicate form' })}
+            >
+              {duplicating ? (
+                <div className="w-4 h-4 border-2 border-amber-400 border-t-amber-600 rounded-full animate-spin" />
+              ) : (
+                <Copy size={16} />
+              )}
+            </motion.button>
+
+            {/* Delete button */}
+            {canEditOrDelete && (
+              <motion.button
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors shadow-sm"
+                title={t('home.deleteForm', { defaultValue: 'Delete form' })}
+              >
+                <Trash2 size={16} />
+              </motion.button>
+            )}
+          </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-2">
+        {/* Action buttons (Edit, QR, Results) */}
+        <div className="grid grid-cols-3 gap-2">
           {canEditOrDelete && (
             <Link
               to={editUrl}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary-50/80 text-primary-700
-                         rounded-xl text-sm font-medium hover:bg-primary-100/80 transition-all duration-300"
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm text-center"
             >
-              <Edit3 size={14} />
-              {t('home.edit')}
+              <Edit3 size={15} />
+              <span>{t('home.edit', { defaultValue: 'Edit' })}</span>
             </Link>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); setShowQRPopup(true); }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-50/80 text-gray-700
-                       rounded-xl text-sm font-medium hover:bg-gray-100/80 transition-all duration-300 border border-gray-100"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-gray-200/60 shadow-sm text-center"
           >
-            <QrCode size={14} />
-            {t('home.qrCode')}
+            <QrCode size={15} />
+            <span>{t('home.qrCode', { defaultValue: 'QR' })}</span>
           </button>
           <Link
             to={responsesUrl}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50/80 text-emerald-700
-                       rounded-xl text-sm font-medium hover:bg-emerald-100/80 transition-all duration-300"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm text-center"
           >
-            <BarChart3 size={14} />
-            {t('home.results')}
+            <BarChart3 size={15} />
+            <span>{t('home.results', { defaultValue: 'Results' })}</span>
           </Link>
         </div>
 

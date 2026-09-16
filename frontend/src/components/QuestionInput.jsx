@@ -177,7 +177,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
             whileTap={{ scale: 0.95 }}
             onClick={onDuplicate}
             className="btn-secondary !px-3"
-            title="Duplicate"
+            title={t('formBuilder.duplicate', { defaultValue: 'Duplicate' })}
           >
             <Copy size={16} />
           </motion.button>
@@ -186,7 +186,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
             whileTap={{ scale: 0.95 }}
             onClick={onDelete}
             className="btn-danger !px-3"
-            title="Delete"
+            title={t('formBuilder.delete', { defaultValue: 'Delete' })}
           >
             <Trash2 size={16} />
           </motion.button>
@@ -284,7 +284,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
 
       {!isLayoutBlock && hasOptions && (
         <motion.div layout className="mb-4">
-          <label className="form-label">Options</label>
+          <label className="form-label">{t('formBuilder.optionsLabel', { defaultValue: 'Options' })}</label>
           <div className="space-y-2">
             {question.options.map((option, index) => (
               <motion.div
@@ -303,9 +303,9 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                     rows={1}
                     value={option.text}
                     onChange={(e) => {
-                      e.target.style.height = 'auto';
-                      e.target.style.height = e.target.scrollHeight + 'px';
-                      handleOptionChange(index, e.target.value);
+                       e.target.style.height = 'auto';
+                       e.target.style.height = e.target.scrollHeight + 'px';
+                       handleOptionChange(index, e.target.value);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -324,7 +324,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                         }, 0);
                       }
                     }}
-                    placeholder={`Option ${index + 1}`}
+                    placeholder={t('formBuilder.optionPlaceholder', { index: index + 1, defaultValue: `Option ${index + 1}` })}
                     className="form-input resize-none overflow-hidden min-h-[48px] py-3"
                   />
                 </div>
@@ -345,7 +345,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
             onClick={handleAddOption}
             className="btn-secondary mt-3 text-sm"
           >
-            + Add Option
+            {t('formBuilder.addOption', { defaultValue: '+ Add Option' })}
           </motion.button>
         </motion.div>
       )}
@@ -353,7 +353,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
       {!isLayoutBlock && question.type === 'linear_scale' && (
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="form-label text-xs">Scale Range</label>
+            <label className="form-label text-xs">{t('formBuilder.scaleRange', { defaultValue: 'Scale Range' })}</label>
             <div className="flex items-center gap-2">
               <select
                 value={question.minScale}
@@ -363,7 +363,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
                 <option value="0">0</option>
                 <option value="1">1</option>
               </select>
-              <span className="text-gray-400 text-xs">to</span>
+              <span className="text-gray-400 text-xs">{t('formBuilder.to', { defaultValue: 'to' })}</span>
               <select
                 value={question.maxScale}
                 onChange={(e) => onChange({ ...question, maxScale: Number(e.target.value) })}
@@ -376,14 +376,14 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
           <div className="space-y-2">
             <input
               type="text"
-              placeholder="Label for min (optional)"
+              placeholder={t('formBuilder.minLabelPlaceholder', { defaultValue: 'Label for min (optional)' })}
               value={question.minLabel || ''}
               onChange={(e) => onChange({ ...question, minLabel: e.target.value })}
               className="form-input text-xs"
             />
             <input
               type="text"
-              placeholder="Label for max (optional)"
+              placeholder={t('formBuilder.maxLabelPlaceholder', { defaultValue: 'Label for max (optional)' })}
               value={question.maxLabel || ''}
               onChange={(e) => onChange({ ...question, maxLabel: e.target.value })}
               className="form-input text-xs"
@@ -394,7 +394,7 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
 
       {!isLayoutBlock && question.type === 'file_upload' && (
         <div className="mb-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 italic text-sm text-gray-500">
-          Respondents will be able to upload files to this question.
+          {t('formBuilder.fileUploadHint', { defaultValue: 'Respondents will be able to upload files to this question.' })}
         </div>
       )}
 
@@ -403,11 +403,11 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="form-label text-xs flex justify-between">
-                Rows <span>(Questions)</span>
+                {t('formBuilder.rowsLabel', { defaultValue: 'Rows' })} <span>{t('formBuilder.rowsSubtitle', { defaultValue: '(Questions)' })}</span>
               </label>
               <textarea
                 className="form-input text-xs font-mono"
-                placeholder="One per line..."
+                placeholder={t('formBuilder.onePerLine', { defaultValue: 'One per line...' })}
                 rows="4"
                 value={question.rows?.join('\n') || ''}
                 onChange={(e) => onChange({ ...question, rows: e.target.value.split('\n') })}
@@ -415,11 +415,11 @@ const QuestionInput = ({ question, onChange, onDuplicate, onDelete, onUploadSucc
             </div>
             <div>
               <label className="form-label text-xs flex justify-between">
-                Columns <span>(Options)</span>
+                {t('formBuilder.columnsLabel', { defaultValue: 'Columns' })} <span>{t('formBuilder.columnsSubtitle', { defaultValue: '(Options)' })}</span>
               </label>
               <textarea
                 className="form-input text-xs font-mono"
-                placeholder="One per line..."
+                placeholder={t('formBuilder.onePerLine', { defaultValue: 'One per line...' })}
                 rows="4"
                 value={question.columns?.join('\n') || ''}
                 onChange={(e) => onChange({ ...question, columns: e.target.value.split('\n') })}

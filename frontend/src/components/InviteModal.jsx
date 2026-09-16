@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, Plus, Trash2, Send, Check, AlertCircle, Users, ChevronDown, Sparkles, ClipboardPaste } from 'lucide-react';
+import { X, Mail, Plus, Trash2, Send, Check, AlertCircle, Users, ChevronDown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { emailGroupsAPI } from '../services/api';
 
 const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, formId, onSendInvites }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [emails, setEmails] = useState([]);
   const [error, setError] = useState('');
@@ -30,9 +32,9 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
 
   const handleAddEmail = () => {
     const trimmed = email.trim().toLowerCase();
-    if (!trimmed) { setError('Please enter an email address'); return; }
-    if (!validateEmail(trimmed)) { setError('Please enter a valid email address'); return; }
-    if (emails.includes(trimmed)) { setError('This email is already added'); return; }
+    if (!trimmed) { setError(t('invite.enterEmail', { defaultValue: 'Please enter an email address' })); return; }
+    if (!validateEmail(trimmed)) { setError(t('invite.validEmail', { defaultValue: 'Please enter a valid email address' })); return; }
+    if (emails.includes(trimmed)) { setError(t('invite.alreadyAdded', { defaultValue: 'This email is already added' })); return; }
     setEmails([...emails, trimmed]);
     setEmail('');
     setError('');
@@ -67,7 +69,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
   };
 
   const handleSendInvites = async () => {
-    if (emails.length === 0) { setError('Please add at least one email'); return; }
+    if (emails.length === 0) { setError(t('invite.addAtLeastOne', { defaultValue: 'Please add at least one email' })); return; }
     try {
       setSending(true);
       setError('');
@@ -75,7 +77,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
       setSent(true);
       setTimeout(() => { setSent(false); setEmails([]); onClose(); }, 2500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send invitations. Please check your Brevo API key.');
+      setError(err.response?.data?.message || t('invite.failedToSend', { defaultValue: 'Failed to send invitations. Please check your email configuration.' }));
     } finally {
       setSending(false);
     }
@@ -109,7 +111,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                   <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm shadow-primary-500/25">
                     <Mail size={14} className="text-white" />
                   </div>
-                  Invite via Email
+                  {t('invite.title', { defaultValue: 'Invite via Email' })}
                 </h3>
                 <p className="text-sm text-gray-500 mt-1 line-clamp-1">{formTitle}</p>
               </div>
@@ -129,8 +131,10 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                     className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
                     <Check size={28} className="text-white" />
                   </motion.div>
-                  <p className="text-lg font-bold text-gray-900">Invitations Sent!</p>
-                  <p className="text-sm text-gray-500 mt-1">{emails.length} email{emails.length !== 1 ? 's' : ''} invited successfully</p>
+                  <p className="text-lg font-bold text-gray-900">{t('invite.sentTitle', { defaultValue: 'Invitations Sent!' })}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {t('invite.sentDesc', { count: emails.length, defaultValue: `${emails.length} email(s) invited successfully` })}
+                  </p>
                 </motion.div>
               ) : (
                 <>
@@ -143,7 +147,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                       >
                         <span className="flex items-center gap-2">
                           <Sparkles size={14} />
-                          Use a saved Email Group
+                          {t('invite.useSavedGroup', { defaultValue: 'Use a saved Email Group' })}
                         </span>
                         <ChevronDown size={14} className={`transition-transform ${showGroups ? 'rotate-180' : ''}`} />
                       </button>
@@ -157,7 +161,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                             className="absolute top-full left-0 right-0 mt-1 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-100 shadow-xl z-10 overflow-hidden"
                           >
                             {loadingGroups ? (
-                              <div className="p-4 text-center text-sm text-gray-400">Loading groups...</div>
+                              <div className="p-4 text-center text-sm text-gray-400">{t('invite.loadingGroups', { defaultValue: 'Loading groups...' })}</div>
                             ) : (
                               <div className="max-h-48 overflow-y-auto">
                                 {groups.map(group => (
@@ -170,15 +174,15 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                                       {group.description && <p className="text-xs text-gray-400">{group.description}</p>}
                                     </div>
                                     <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100 flex-shrink-0">
-                                      {group.emails.length} emails
+                                      {t('groups.emailsCount', { count: group.emails.length, defaultValue: `${group.emails.length} emails` })}
                                     </span>
                                   </button>
                                 ))}
                               </div>
                             )}
                             <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
-                              <a href="/email-groups" target="_blank" className="text-xs text-primary-600 hover:underline font-medium">
-                                Manage Groups →
+                              <a href="/email-groups" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline font-medium">
+                                {t('invite.manageGroups', { defaultValue: 'Manage Groups →' })}
                               </a>
                             </div>
                           </motion.div>
@@ -190,7 +194,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                   {/* Email input */}
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-                      Add Emails <span className="normal-case font-normal text-gray-400">— paste multiple at once</span>
+                      {t('invite.addEmails', { defaultValue: 'Add Emails' })} <span className="normal-case font-normal text-gray-400">{t('invite.pasteMultipleHint', { defaultValue: '— paste multiple at once' })}</span>
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
@@ -201,7 +205,7 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                           onChange={e => { setEmail(e.target.value); setError(''); }}
                           onKeyDown={handleKeyDown}
                           onPaste={handleBulkPaste}
-                          placeholder="colleague@company.com"
+                          placeholder={t('invite.emailPlaceholder', { defaultValue: 'colleague@company.com' })}
                           className="form-input !pl-9 text-sm"
                           autoFocus
                         />
@@ -228,10 +232,12 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                            <Users size={12} /> Invitees ({emails.length})
+                            <Users size={12} /> {t('invite.invitees', { count: emails.length, defaultValue: `Invitees (${emails.length})` })}
                           </label>
                           {emails.length > 1 && (
-                            <button onClick={() => setEmails([])} className="text-xs text-red-400 hover:text-red-500 font-medium">Clear all</button>
+                            <button onClick={() => setEmails([])} className="text-xs text-red-400 hover:text-red-500 font-medium">
+                              {t('invite.clearAll', { defaultValue: 'Clear all' })}
+                            </button>
                           )}
                         </div>
                         <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
@@ -275,9 +281,9 @@ const InviteModal = ({ isOpen, onClose, shareToken, formTitle, formDescription, 
                     }`}
                   >
                     {sending ? (
-                      <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Sending...</>
+                      <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> {t('invite.sending', { defaultValue: 'Sending...' })}</>
                     ) : (
-                      <><Send size={16} /> Send Invites{emails.length > 0 ? ` (${emails.length})` : ''}</>
+                      <><Send size={16} /> {t('invite.sendInvites', { count: emails.length, defaultValue: `Send Invites (${emails.length})` })}</>
                     )}
                   </motion.button>
                 </>

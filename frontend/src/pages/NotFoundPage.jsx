@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const NotFoundPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
@@ -31,10 +33,10 @@ const NotFoundPage = () => {
         </motion.div>
 
         <h1 className="text-4xl font-extrabold mb-4 font-manrope bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-           Unauthorized Space
+           {t('notFound.title', { defaultValue: 'Unauthorized Space' })}
         </h1>
         <p className="text-slate-400 mb-8 leading-relaxed">
-           You seemed to have drifted off your designated orbit. This sector is restricted or doesn't exist.
+           {t('notFound.desc', { defaultValue: "You seemed to have drifted off your designated orbit. This sector is restricted or doesn't exist." })}
         </p>
 
         <button 
@@ -42,7 +44,7 @@ const NotFoundPage = () => {
            className="btn-primary px-8 py-3 rounded-xl font-bold tracking-wide shadow-indigo-500/25 hover:shadow-indigo-500/40 relative overflow-hidden group w-full sm:w-auto"
         >
            <span className="relative z-10 flex items-center justify-center gap-2">
-             Back to Login
+             {t('notFound.backHome', { defaultValue: 'Back to Home' })}
            </span>
         </button>
       </motion.div>

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, QrCode, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
 
 const QRPopup = ({ isOpen, onClose, shareToken, formTitle }) => {
+  const { t } = useTranslation();
   const publicUrl = `${window.location.origin}/s/${shareToken}`;
   const [copied, setCopied] = useState(false);
 
@@ -55,7 +57,7 @@ const QRPopup = ({ isOpen, onClose, shareToken, formTitle }) => {
                 <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-sm shadow-primary-500/25">
                   <QrCode size={13} className="text-white" />
                 </div>
-                QR Code
+                {t('qr.title', { defaultValue: 'QR Code' })}
               </motion.h3>
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -101,7 +103,7 @@ const QRPopup = ({ isOpen, onClose, shareToken, formTitle }) => {
                 transition={{ delay: 0.25 }}
                 className="text-xs text-gray-400 mt-4 text-center"
               >
-                Scan with a phone camera to open the form
+                {t('qr.scanHint', { defaultValue: 'Scan with a phone camera to open the form' })}
               </motion.p>
 
               {/* Copy Link Button */}
@@ -129,7 +131,7 @@ const QRPopup = ({ isOpen, onClose, shareToken, formTitle }) => {
                       className="flex items-center gap-2"
                     >
                       <Check size={15} />
-                      Link Copied!
+                      {t('qr.linkCopied', { defaultValue: 'Link Copied!' })}
                     </motion.span>
                   ) : (
                     <motion.span
@@ -140,7 +142,7 @@ const QRPopup = ({ isOpen, onClose, shareToken, formTitle }) => {
                       className="flex items-center gap-2"
                     >
                       <Copy size={15} />
-                      Copy Link
+                      {t('qr.copyLink', { defaultValue: 'Copy Link' })}
                     </motion.span>
                   )}
                 </AnimatePresence>

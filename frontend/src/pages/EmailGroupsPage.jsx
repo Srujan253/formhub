@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, Plus, Trash2, Edit3, X, Check, ArrowLeft,
-  Mail, ChevronDown, ChevronUp, Save, AlertCircle, Sparkles
+  Users, Plus, Trash2, Edit3, X, ArrowLeft,
+  ChevronUp, Save, AlertCircle, Sparkles
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { emailGroupsAPI } from '../services/api';
 import { EmailGroupsSkeleton } from '../components/Skeleton';
 import Toast from '../components/Toast';
 
 // ── Group Form Modal ────────────────────────────────────────────────────────
 const GroupModal = ({ group, onClose, onSave }) => {
+  const { t } = useTranslation();
   const isEditing = !!group?._id;
   const [name, setName] = useState(group?.name || '');
   const [description, setDescription] = useState(group?.description || '');
@@ -24,8 +26,8 @@ const GroupModal = ({ group, onClose, onSave }) => {
   const handleAddEmail = () => {
     const trimmed = emailInput.trim().toLowerCase();
     if (!trimmed) return;
-    if (!validate(trimmed)) { setError('Invalid email address'); return; }
-    if (emails.includes(trimmed)) { setError('Already added'); return; }
+    if (!validate(trimmed)) { setError(t('groups.invalidEmail', { defaultValue: 'Invalid email address' })); return; }
+    if (emails.includes(trimmed)) { setError(t('groups.alreadyAdded', { defaultValue: 'Already added' })); return; }
     setEmails([...emails, trimmed]);
     setEmailInput('');
     setError('');
@@ -46,8 +48,8 @@ const GroupModal = ({ group, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) { setError('Group name is required'); return; }
-    if (emails.length === 0) { setError('Add at least one email'); return; }
+    if (!name.trim()) { setError(t('groups.nameRequired', { defaultValue: 'Group name is required' })); return; }
+    if (emails.length === 0) { setError(t('groups.addAtLeastOne', { defaultValue: 'Add at least one email' })); return; }
     try {
       setSaving(true);
       const payload = { name: name.trim(), description: description.trim(), emails };
@@ -60,7 +62,7 @@ const GroupModal = ({ group, onClose, onSave }) => {
       }
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save group');
+      setError(err.response?.data?.message || t('groups.failedSave', { defaultValue: 'Failed to save group' }));
     } finally {
       setSaving(false);
     }
@@ -86,9 +88,9 @@ const GroupModal = ({ group, onClose, onSave }) => {
         <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-start">
           <div>
             <h3 className="text-lg font-bold text-gray-900">
-              {isEditing ? 'Edit Group' : 'New Email Group'}
+              {isEditing ? t('groups.editGroup', { defaultValue: 'Edit Group' }) : t('groups.newGroupTitle', { defaultValue: 'New Email Group' })}
             </h3>
-            <p className="text-sm text-gray-500 mt-0.5">Save a list of emails for quick sending</p>
+            <p className="text-sm text-gray-500 mt-0.5">{t('groups.modalSubtitle', { defaultValue: 'Save a list of emails for quick sending' })}</p>
           </div>
           <motion.button whileHover={{ rotate: 90 }} onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500">
@@ -99,22 +101,22 @@ const GroupModal = ({ group, onClose, onSave }) => {
         <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Name */}
           <div>
-            <label className="form-label">Group Name *</label>
-            <input className="form-input" placeholder="e.g. Marketing Team, Class 10A" value={name} onChange={e => { setName(e.target.value); setError(''); }} />
+            <label className="form-label">{t('groups.nameLabel', { defaultValue: 'Group Name *' })}</label>
+            <input className="form-input" placeholder={t('groups.namePlaceholder', { defaultValue: 'e.g. Marketing Team, Class 10A' })} value={name} onChange={e => { setName(e.target.value); setError(''); }} />
           </div>
           {/* Description */}
           <div>
-            <label className="form-label">Description <span className="text-gray-400 font-normal">(optional)</span></label>
-            <input className="form-input" placeholder="Short note about this group" value={description} onChange={e => setDescription(e.target.value)} />
+            <label className="form-label">{t('groups.descLabel', { defaultValue: 'Description' })} <span className="text-gray-400 font-normal">{t('groups.optional', { defaultValue: '(optional)' })}</span></label>
+            <input className="form-input" placeholder={t('groups.descPlaceholder', { defaultValue: 'Short note about this group' })} value={description} onChange={e => setDescription(e.target.value)} />
           </div>
 
           {/* Email input with bulk paste */}
           <div>
-            <label className="form-label">Email Addresses * <span className="text-xs font-normal text-gray-400">— paste multiple, comma separated</span></label>
+            <label className="form-label">{t('groups.emailAddresses', { defaultValue: 'Email Addresses *' })} <span className="text-xs font-normal text-gray-400">{t('groups.pasteMultipleHint', { defaultValue: '— paste multiple, comma separated' })}</span></label>
             <div className="flex gap-2">
               <input
                 className="form-input flex-1 text-sm"
-                placeholder="Paste emails or type one..."
+                placeholder={t('groups.emailInputPlaceholder', { defaultValue: 'Paste emails or type one...' })}
                 value={emailInput}
                 onChange={e => { setEmailInput(e.target.value); setError(''); }}
                 onPaste={handleBulkPaste}
@@ -141,7 +143,7 @@ const GroupModal = ({ group, onClose, onSave }) => {
           {emails.length > 0 && (
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block flex items-center gap-1.5">
-                <Users size={12} /> {emails.length} email{emails.length !== 1 ? 's' : ''}
+                <Users size={12} /> {t('groups.emailsCount', { count: emails.length, defaultValue: `${emails.length} emails` })}
               </label>
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-3 bg-gray-50/60 rounded-2xl border border-gray-100">
                 <AnimatePresence>
@@ -166,12 +168,12 @@ const GroupModal = ({ group, onClose, onSave }) => {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+          <button onClick={onClose} className="btn-secondary flex-1">{t('groups.cancel', { defaultValue: 'Cancel' })}</button>
           <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit} disabled={saving}
             className="btn-primary flex-1 flex items-center justify-center gap-2">
             {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-            {saving ? 'Saving...' : isEditing ? 'Update Group' : 'Create Group'}
+            {saving ? t('groups.saving', { defaultValue: 'Saving...' }) : isEditing ? t('groups.updateGroup', { defaultValue: 'Update Group' }) : t('groups.createGroup', { defaultValue: 'Create Group' })}
           </motion.button>
         </div>
       </motion.div>
@@ -181,6 +183,7 @@ const GroupModal = ({ group, onClose, onSave }) => {
 
 // ── Main Page ───────────────────────────────────────────────────────────────
 const EmailGroupsPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,7 +207,7 @@ const EmailGroupsPage = () => {
       const res = await emailGroupsAPI.getAll();
       setGroups(res.data.data || []);
     } catch (err) {
-      showToast('Failed to load groups', 'error');
+      showToast(t('groups.failedLoad', { defaultValue: 'Failed to load groups' }), 'error');
     } finally {
       setLoading(false);
     }
@@ -213,22 +216,22 @@ const EmailGroupsPage = () => {
   const handleSave = (group, action) => {
     if (action === 'created') {
       setGroups(prev => [group, ...prev]);
-      showToast(`"${group.name}" created ✨`);
+      showToast(t('groups.createdToast', { name: group.name, defaultValue: `"${group.name}" created ✨` }));
     } else {
       setGroups(prev => prev.map(g => g._id === group._id ? group : g));
-      showToast(`"${group.name}" updated`);
+      showToast(t('groups.updatedToast', { name: group.name, defaultValue: `"${group.name}" updated` }));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this email group? This cannot be undone.')) return;
+    if (!window.confirm(t('groups.deleteConfirm', { defaultValue: 'Delete this email group? This cannot be undone.' }))) return;
     try {
       setDeletingId(id);
       await emailGroupsAPI.delete(id);
       setGroups(prev => prev.filter(g => g._id !== id));
-      showToast('Group deleted');
+      showToast(t('groups.deletedToast', { defaultValue: 'Group deleted' }));
     } catch (err) {
-      showToast('Failed to delete group', 'error');
+      showToast(t('groups.failedDelete', { defaultValue: 'Failed to delete group' }), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -245,25 +248,21 @@ const EmailGroupsPage = () => {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-2">
-        <motion.button whileHover={{ x: -2 }} onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium">
-          <ArrowLeft size={16} /> Back
-        </motion.button>
+      <div className="flex items-center gap-4 mb-3">
+        <button onClick={() => navigate('/')}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 font-medium transition-colors">
+          <ArrowLeft size={15} /> {t('groups.back', { defaultValue: 'Back' })}
+        </button>
       </div>
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-200/70 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={16} className="text-primary-500" />
-            <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">Shortcuts</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Email Groups</h1>
-          <p className="text-gray-500 mt-1 text-sm">Save groups of emails once, load them instantly when sending surveys.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{t('groups.title', { defaultValue: 'Email Groups' })}</h1>
+          <p className="text-gray-500 mt-1 text-sm">{t('groups.subtitle', { defaultValue: 'Save groups of emails once, load them instantly when sending surveys.' })}</p>
         </div>
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={() => setModalGroup({})}
-          className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> New Group
+          className="btn-primary flex items-center gap-2 shadow-sm font-semibold text-sm px-4 py-2.5 rounded-xl self-start sm:self-auto">
+          <Plus size={16} className="stroke-[2.5]" /> {t('groups.newGroup', { defaultValue: 'New Group' })}
         </motion.button>
       </div>
 
@@ -274,10 +273,10 @@ const EmailGroupsPage = () => {
           <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <Users size={28} className="text-primary-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No groups yet</h3>
-          <p className="text-gray-500 text-sm mb-6">Create your first email group to quickly load recipients when sending surveys.</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{t('groups.noGroupsYet', { defaultValue: 'No groups yet' })}</h3>
+          <p className="text-gray-500 text-sm mb-6">{t('groups.noGroupsDesc', { defaultValue: 'Create your first email group to quickly load recipients when sending surveys.' })}</p>
           <motion.button whileHover={{ scale: 1.02 }} onClick={() => setModalGroup({})} className="btn-primary">
-            Create First Group
+            {t('groups.createFirstGroup', { defaultValue: 'Create First Group' })}
           </motion.button>
         </motion.div>
       ) : (
@@ -296,7 +295,7 @@ const EmailGroupsPage = () => {
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="font-bold text-gray-900 text-lg truncate">{group.name}</h3>
                         <span className="flex-shrink-0 px-2.5 py-0.5 bg-primary-50 text-primary-700 border border-primary-100 rounded-full text-xs font-semibold">
-                          {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}
+                          {t('groups.emailsCount', { count: group.emails.length, defaultValue: `${group.emails.length} emails` })}
                         </span>
                       </div>
                       {group.description && (
@@ -310,13 +309,13 @@ const EmailGroupsPage = () => {
                         {!isExpanded && group.emails.length > 5 && (
                           <button onClick={() => setExpandedId(group._id)}
                             className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                            +{group.emails.length - 5} more
+                            {t('groups.showMore', { count: group.emails.length - 5, defaultValue: `+${group.emails.length - 5} more` })}
                           </button>
                         )}
                         {isExpanded && (
                           <button onClick={() => setExpandedId(null)}
                             className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs hover:bg-gray-200 transition-colors flex items-center gap-1">
-                            <ChevronUp size={10} /> Show less
+                            <ChevronUp size={10} /> {t('groups.showLess', { defaultValue: 'Show less' })}
                           </button>
                         )}
                       </div>

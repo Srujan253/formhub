@@ -54,7 +54,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
     
     // Check file size (max 5MB just as an example, user wanted 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size exceeds 10MB limit');
+      setUploadError(t('media.fileSizeLimit', { defaultValue: 'File size exceeds 10MB limit' }));
       return;
     }
     
@@ -69,11 +69,11 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
          setLocalAnswer(fileUrl);
          onChange(question.id, fileUrl);
       } else {
-         setUploadError('Upload failed: Invalid response from server');
+         setUploadError(t('media.uploadFailed', { defaultValue: 'Upload failed: Invalid response from server' }));
       }
     } catch (err) {
       console.error('File upload error:', err);
-      setUploadError('Failed to upload file. Please try again.');
+      setUploadError(t('media.uploadFailed', { defaultValue: 'Failed to upload file. Please try again.' }));
     } finally {
       setUploading(false);
     }
@@ -181,7 +181,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
               </div>
               <div className="flex flex-col pr-8">
                 <span className={`text-sm font-semibold ${isReadOnly ? 'text-slate-500' : 'text-gray-700'}`}>
-                  Attached Document
+                  {t('media.attachedDocument', { defaultValue: 'Attached Document' })}
                 </span>
                 <button 
                   onClick={(e) => {
@@ -194,7 +194,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
                   }}
                   className="text-xs text-primary-500 hover:text-primary-600 hover:underline flex items-center gap-1 mt-0.5 text-left"
                 >
-                  View Details
+                  {t('media.viewDetails', { defaultValue: 'View Details' })}
                 </button>
               </div>
             </div>
@@ -209,7 +209,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
           type="text"
           value={localAnswer}
           onChange={handleTextChange}
-          placeholder="Your answer"
+          placeholder={t('public.yourAnswer', { defaultValue: 'Your answer' })}
           readOnly={isReadOnly}
           className={`form-input ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
         />
@@ -219,7 +219,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
         <textarea
           value={localAnswer}
           onChange={handleTextChange}
-          placeholder="Your answer"
+          placeholder={t('public.yourAnswer', { defaultValue: 'Your answer' })}
           rows="4"
           readOnly={isReadOnly}
           className={`form-input resize-none ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
@@ -374,7 +374,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
           disabled={isReadOnly}
           className={`form-input ${readOnlyInputClass} ${isReadOnly ? 'text-slate-500' : ''} ${isError ? 'border-red-300 focus:ring-red-400/50' : ''}`}
         >
-          <option value="">Select an option</option>
+          <option value="">{t('public.selectAnOption', { defaultValue: 'Select an option' })}</option>
           {question.options.map((option) => (
             <option key={option.id} value={option.text}>
               {option.text}
@@ -491,7 +491,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
       {question.type === 'section_break' && (
         <div className="my-10 border-t-2 border-dashed border-gray-200 relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-white text-gray-400 font-bold text-xs uppercase tracking-widest">
-            Next Section
+            {t('public.nextSection', { defaultValue: 'Next Section' })}
           </div>
         </div>
       )}
@@ -509,13 +509,13 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
                    {uploading ? (
                      <>
                        <div className="w-8 h-8 mb-2 rounded-full border-[3px] border-primary-100 border-t-primary-500 animate-spin"></div>
-                       <p className="mb-1 text-sm text-primary-600 font-medium">Uploading...</p>
+                       <p className="mb-1 text-sm text-primary-600 font-medium">{t('media.uploading', { defaultValue: 'Uploading...' })}</p>
                      </>
                    ) : (
                      <>
                        <Upload className={`w-8 h-8 mb-2 transition-colors ${isError ? 'text-red-300 group-hover:text-red-400' : 'text-gray-400 group-hover:text-primary-500'}`} />
-                       <p className={`mb-1 text-sm font-medium ${isError ? 'text-red-500' : 'text-gray-500'}`}>Click to upload or drag and drop</p>
-                       <p className="text-xs text-gray-400">PDF, IMAGE, or DOCX (Max 10MB)</p>
+                       <p className={`mb-1 text-sm font-medium ${isError ? 'text-red-500' : 'text-gray-500'}`}>{t('media.clickToUploadOrDrag', { defaultValue: 'Click to upload or drag and drop' })}</p>
+                       <p className="text-xs text-gray-400">{t('media.fileTypesHint', { defaultValue: 'PDF, IMAGE, or DOCX (Max 10MB)' })}</p>
                      </>
                    )}
                  </div>
@@ -567,7 +567,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                      </svg>
-                     Click to View
+                     {t('media.clickToView', { defaultValue: 'Click to View' })}
                    </button>
                  </div>
                </div>
@@ -593,7 +593,7 @@ const QuestionPreview = ({ question, answer, onChange, errors, onViewFile, confi
           animate={{ opacity: 1, y: 0 }}
           className="text-red-500 text-xs mt-2 font-medium"
         >
-          This field is required
+          {t('public.fieldRequired', { defaultValue: 'This field is required' })}
         </motion.p>
       )}
     </motion.div>

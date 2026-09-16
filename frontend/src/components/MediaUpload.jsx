@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Image as ImageIcon, Paperclip, Loader2, X, FileText, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cloudinaryAPI } from '../services/api';
 
 const MediaUpload = ({ mediaUrl, mediaType, onChange, label, compact = false }) => {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -14,7 +16,7 @@ const MediaUpload = ({ mediaUrl, mediaType, onChange, label, compact = false }) 
     const isPdf = file.type === 'application/pdf';
 
     if (!isImage && !isPdf) {
-      alert('Please select a valid image or PDF file.');
+      alert(t('media.selectValid', { defaultValue: 'Please select a valid image or PDF file.' }));
       return;
     }
 
@@ -23,11 +25,11 @@ const MediaUpload = ({ mediaUrl, mediaType, onChange, label, compact = false }) 
       const data = await cloudinaryAPI.uploadImage(file);
       onChange({
         mediaUrl: data.secure_url,
-        mediaType: isPdf ? 'pdf' : 'image', // Ensure backend parses PDF vs Image
+        mediaType: isPdf ? 'pdf' : 'image',
       });
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Upload failed. Ensure Cloudinary credentials are set.');
+      alert(t('media.uploadFailed', { defaultValue: 'Upload failed. Ensure Cloudinary credentials are set.' }));
     } finally {
       setUploading(false);
     }
@@ -60,7 +62,7 @@ const MediaUpload = ({ mediaUrl, mediaType, onChange, label, compact = false }) 
           ) : (
             <>
               {compact ? <Paperclip size={18} /> : <ImageIcon size={20} />}
-              {!compact && <span>Add Media (Image/PDF)</span>}
+              {!compact && <span>{t('media.addMedia', { defaultValue: 'Add Media (Image/PDF)' })}</span>}
             </>
           )}
         </motion.button>
@@ -75,14 +77,16 @@ const MediaUpload = ({ mediaUrl, mediaType, onChange, label, compact = false }) 
                 <FileText size={24} />
               </div>
               <div className="flex flex-col pr-8">
-                <span className="text-sm font-semibold text-gray-700 truncate max-w-[200px]">Attached Document.pdf</span>
+                <span className="text-sm font-semibold text-gray-700 truncate max-w-[200px]">
+                  {t('media.attachedDocument', { defaultValue: 'Attached Document.pdf' })}
+                </span>
                 <a 
                   href={mediaUrl} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-xs text-primary-500 hover:text-primary-600 hover:underline flex items-center gap-1 mt-0.5"
                 >
-                  View Details <ExternalLink size={10} />
+                  {t('media.viewDetails', { defaultValue: 'View Details' })} <ExternalLink size={10} />
                 </a>
               </div>
             </div>

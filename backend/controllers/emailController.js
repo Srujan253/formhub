@@ -1,6 +1,33 @@
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import Form from '../model/Form.js';
 
-// Send invite emails via Brevo
+// Initialize AWS SES client
+const getSesClient = () => {
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const sessionToken = process.env.AWS_SESSION_TOKEN;
+  const region = process.env.AWS_REGION || 'eu-north-1';
+
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error('AWS credentials missing. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your environment.');
+  }
+
+  const credentials = {
+    accessKeyId,
+    secretAccessKey,
+  };
+
+  if (sessionToken) {
+    credentials.sessionToken = sessionToken;
+  }
+
+  return new SESClient({
+    region,
+    credentials,
+  });
+};
+
+// Send invite emails via AWS SES (Optimized for Primary Inbox)
 export const sendInvites = async (req, res) => {
   try {
     const { emails, formTitle, formDescription, shareToken, publicUrl, formId } = req.body;
@@ -22,145 +49,133 @@ export const sendInvites = async (req, res) => {
       return res.status(404).json({ message: 'Form not found. Try refreshing the page.' });
     }
 
-    const BREVO_API_KEY = process.env.BREVO_API_KEY;
-    const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@pulse-forms.com';
+    const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@villdesign.com';
     const SENDER_NAME = process.env.SENDER_NAME || 'Pulse';
-
-    if (!BREVO_API_KEY) {
-      return res.status(500).json({ message: 'Email service not configured. Please set BREVO_API_KEY in .env' });
-    }
 
     const formUrl = publicUrl || `${req.protocol}://${req.get('host')}/s/${form.shareToken}`;
     const title = formTitle || form.title;
     const description = formDescription || form.description || '';
-    const headerImage = form.headerImage || '';
 
-    // Generate QR code URL using a free API for the email
-    const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(formUrl)}&color=312e81&bgcolor=ffffff&format=png&margin=10`;
+    // Clean, transactional template optimized to bypass Promotions tab
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f6f8fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #24292f; line-height: 1.5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f6f8fa; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width: 560px; background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 12px; overflow: hidden; text-align: left;">
+          
+          <!-- Header Bar -->
+          <tr>
+            <td style="padding: 24px 32px; border-bottom: 1px solid #eaeef2;">
+              <div style="font-size: 18px; font-weight: 700; color: #4338ca; display: inline-block;">
+                ⚡ Pulse
+              </div>
+            </td>
+          </tr>
 
-    // Build the email payload for Brevo
-    const emailPayload = {
-      sender: {
-        name: SENDER_NAME,
-        email: SENDER_EMAIL,
-      },
-      to: emails.map((email) => ({ email })),
-      subject: title,
-      htmlContent: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin:0;padding:0;font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background-color:#f8f9ff;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" style="max-width:540px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(99,102,241,0.08);border:1px solid #f0f0ff;">
-                  
-                  <!-- Header Banner -->
-                  <tr>
-                    <td style="padding:36px 32px 24px;text-align:center;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:20px 20px 0 0;${headerImage ? `background-image:url(${headerImage});background-size:cover;background-position:center;` : ''}">
-                      <div style="width:52px;height:52px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-block;line-height:52px;margin-bottom:14px;backdrop-filter:blur(4px);">
-                        <span style="font-size:24px;">✨</span>
-                      </div>
-                      <h1 style="color:#ffffff;font-size:24px;font-weight:800;margin:0 0 4px;text-shadow:0 2px 4px rgba(0,0,0,0.3);">Pulse</h1>
-                      <p style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;margin:0;text-shadow:0 1px 2px rgba(0,0,0,0.3);">Survey Invitation</p>
-                    </td>
-                  </tr>
+          <!-- Content Body -->
+          <tr>
+            <td style="padding: 32px 32px 24px;">
+              <p style="font-size: 15px; margin: 0 0 16px; color: #24292f;">
+                Hello,
+              </p>
+              <p style="font-size: 15px; margin: 0 0 24px; color: #57606a;">
+                You have been invited to complete the following form:
+              </p>
 
-                  <!-- Body -->
-                  <tr>
-                    <td style="padding:32px 32px 24px;">
-                      <h2 style="color:#1f2937;font-size:20px;font-weight:700;margin:0 0 12px;">You're invited to a survey!</h2>
-                      <p style="color:#6b7280;font-size:14px;line-height:1.7;margin:0 0 24px;">
-                        You have been invited to participate in a survey. Your response is valuable and will help us gather important insights. Please take a few minutes to complete it.
-                      </p>
-                      
-                      <!-- Form Info Card -->
-                      <div style="background:#f8f9ff;border:1px solid #e0e1ff;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
-                        <p style="color:#4f46e5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 6px;">📋 Survey Details</p>
-                        <p style="color:#1f2937;font-size:18px;font-weight:700;margin:0 0 6px;">${title}</p>
-                        ${description ? `<p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0;">${description}</p>` : ''}
-                      </div>
+              <!-- Form Box -->
+              <div style="background-color: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
+                <h2 style="font-size: 18px; font-weight: 600; margin: 0 0 8px; color: #0969da;">
+                  ${title}
+                </h2>
+                ${description ? `<p style="font-size: 14px; margin: 0; color: #57606a; white-space: pre-wrap;">${description}</p>` : ''}
+              </div>
 
-                      <!-- CTA Button -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-                        <tr>
-                          <td align="center">
-                            <a href="${formUrl}" style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;border-radius:14px;box-shadow:0 6px 20px rgba(99,102,241,0.3);">
-                              Fill Out Survey →
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
+              <!-- Button CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td>
+                    <a href="${formUrl}" style="background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 6px; display: inline-block;">
+                      Complete Form &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
 
-                      <!-- Link -->
-                      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px 18px;margin-bottom:28px;">
-                        <p style="color:#9ca3af;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">🔗 Direct Link</p>
-                        <a href="${formUrl}" style="color:#4f46e5;font-size:12px;word-break:break-all;text-decoration:none;font-weight:500;">${formUrl}</a>
-                      </div>
+              <!-- Plain Link Backup -->
+              <p style="font-size: 13px; color: #57606a; margin: 0 0 8px;">
+                Button not working? Copy and paste this URL into your browser:
+              </p>
+              <p style="font-size: 12px; word-break: break-all; margin: 0 0 24px; color: #0969da;">
+                <a href="${formUrl}" style="color: #0969da;">${formUrl}</a>
+              </p>
+            </td>
+          </tr>
 
-                      <!-- QR Code Section -->
-                      <div style="text-align:center;padding:20px 0 8px;">
-                        <p style="color:#6b7280;font-size:12px;font-weight:600;margin:0 0 14px;">Or scan this QR code:</p>
-                        <div style="display:inline-block;padding:16px;background:#ffffff;border:2px solid #f0f0ff;border-radius:16px;box-shadow:0 2px 12px rgba(99,102,241,0.06);">
-                          <img src="${qrCodeImageUrl}" alt="QR Code" width="160" height="160" style="display:block;border-radius:8px;" />
-                        </div>
-                        <p style="color:#9ca3af;font-size:10px;margin:10px 0 0;">Scan with your phone camera</p>
-                      </div>
-                    </td>
-                  </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 32px; background-color: #f6f8fa; border-top: 1px solid #eaeef2; font-size: 12px; color: #6e7781;">
+              Sent via <strong>Pulse</strong> on behalf of the form administrator.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
 
-                  <!-- Footer -->
-                  <tr>
-                    <td style="padding:20px 32px 28px;text-align:center;border-top:1px solid #f3f4f6;">
-                      <p style="color:#9ca3af;font-size:11px;margin:0 0 4px;">
-                        Powered by <strong style="color:#6366f1;">Pulse</strong> • Modern Form Builder
-                      </p>
-                      <p style="color:#d1d5db;font-size:10px;margin:0;">
-                        This email was sent because someone invited you to participate in a survey.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `,
-    };
+    const ses = getSesClient();
 
-    // Send via Brevo API
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'api-key': BREVO_API_KEY,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(emailPayload),
+    // Send email to each recipient
+    const sendPromises = emails.map(async (recipientEmail) => {
+      const params = {
+        Source: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+        ReplyToAddresses: [SENDER_EMAIL],
+        Destination: {
+          ToAddresses: [recipientEmail],
+        },
+        Message: {
+          Subject: {
+            Data: `Form Request: ${title}`,
+            Charset: 'UTF-8',
+          },
+          Body: {
+            Html: {
+              Data: htmlContent,
+              Charset: 'UTF-8',
+            },
+            Text: {
+              Data: `Hello,\n\nYou have been invited to complete the form: ${title}\n\n${description ? description + '\n\n' : ''}Please access and fill out the form using this link:\n${formUrl}\n\n--\nSent via Pulse`,
+              Charset: 'UTF-8',
+            },
+          },
+        },
+      };
+
+      const command = new SendEmailCommand(params);
+      return ses.send(command);
     });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error('Brevo API error:', result);
-      return res.status(response.status).json({
-        message: result.message || 'Failed to send emails via Brevo',
-        error: result,
-      });
-    }
+    await Promise.all(sendPromises);
 
     res.status(200).json({
       success: true,
-      message: `Invitations sent to ${emails.length} recipient(s)`,
-      data: result,
+      message: `Invitations sent to ${emails.length} recipient(s) via AWS SES`,
     });
   } catch (error) {
-    console.error('Email send error:', error);
-    res.status(500).json({ message: 'Error sending invitations', error: error.message });
+    console.error('AWS SES Error:', error);
+    res.status(500).json({
+      message: error.message || 'Error sending invitations via AWS SES',
+      error: error.name || 'AWSSESError',
+    });
   }
 };

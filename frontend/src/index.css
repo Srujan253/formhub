@@ -39,23 +39,21 @@ button {
 
 @layer components {
   .btn-primary {
-    @apply px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl
-           hover:from-primary-700 hover:to-primary-600 transition-all duration-300
-           shadow-md shadow-primary-500/20 hover:shadow-lg hover:shadow-primary-500/30
-           font-medium text-sm active:scale-[0.98];
+    @apply px-4 sm:px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl
+           transition-colors duration-200 shadow-sm hover:shadow
+           font-semibold text-sm active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply px-5 py-2.5 bg-white/80 text-gray-700 rounded-xl border border-gray-200/80
-           hover:bg-white hover:border-gray-300 transition-all duration-300
-           shadow-sm hover:shadow-md font-medium text-sm backdrop-blur-sm active:scale-[0.98];
+    @apply px-4 sm:px-5 py-2.5 bg-white text-gray-700 rounded-xl border border-gray-200
+           hover:bg-gray-50 hover:border-gray-300 transition-colors duration-200
+           shadow-sm font-semibold text-sm active:scale-[0.98];
   }
 
   .btn-danger {
-    @apply px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl
-           hover:from-red-600 hover:to-rose-600 transition-all duration-300
-           shadow-md shadow-red-500/20 hover:shadow-lg hover:shadow-red-500/30
-           font-medium text-sm active:scale-[0.98];
+    @apply px-4 sm:px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl
+           transition-colors duration-200 shadow-sm hover:shadow
+           font-semibold text-sm active:scale-[0.98];
   }
 
   .form-input {

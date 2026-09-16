@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, QrCode, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { X, Copy, Check, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
 
 const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const publicUrl = `${window.location.origin}/s/${shareToken}`;
 
@@ -51,7 +53,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
                   <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
                     <LinkIcon size={14} className="text-white" />
                   </div>
-                  Share Form
+                  {t('share.title', { defaultValue: 'Share Form' })}
                 </h3>
                 <p className="text-sm text-gray-500 mt-1 line-clamp-1">{formTitle}</p>
               </div>
@@ -71,7 +73,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
               {/* Share Link */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-                  Share Link
+                  {t('share.shareLink', { defaultValue: 'Share Link' })}
                 </label>
                 <div className="flex gap-2">
                   <div className="flex-1 px-4 py-3 bg-gray-50/80 border border-gray-200/80 rounded-xl text-sm text-gray-700
@@ -89,7 +91,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
                       }`}
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
-                    {copied ? 'Copied!' : 'Copy'}
+                    {copied ? t('share.copied', { defaultValue: 'Copied!' }) : t('share.copy', { defaultValue: 'Copy' })}
                   </motion.button>
                 </div>
               </div>
@@ -97,7 +99,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
               {/* QR Code */}
               <div className="text-center">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
-                  QR Code
+                  {t('share.qrCode', { defaultValue: 'QR Code' })}
                 </label>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -114,7 +116,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
                     includeMargin={false}
                   />
                 </motion.div>
-                <p className="text-xs text-gray-400 mt-3">Scan with a phone camera to open the form</p>
+                <p className="text-xs text-gray-400 mt-3">{t('share.scanHint', { defaultValue: 'Scan with a phone camera to open the form' })}</p>
               </div>
 
               {/* Open in new tab */}
@@ -129,7 +131,7 @@ const ShareModal = ({ isOpen, onClose, shareToken, formTitle }) => {
                            transition-all duration-300 backdrop-blur-sm"
               >
                 <ExternalLink size={16} />
-                Open in new tab
+                {t('share.openNewTab', { defaultValue: 'Open in new tab' })}
               </motion.a>
             </div>
           </motion.div>
