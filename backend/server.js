@@ -15,20 +15,34 @@ dotenv.config();
 
 const app = express();
 
-// CORS — allow all .onrender.com origins, .vercel.app origins, and localhost
-const allowedOriginPattern = /\.(onrender\.com|vercel\.app)$/;
+// CORS — allow all .onrender.com origins, .vercel.app origins, .villdesign.com origins, and localhost
+const allowedOriginPattern = /\.(onrender\.com|vercel\.app|villdesign\.com)$/;
 
 const isAllowedOrigin = (origin) => {
   // Allow requests with no origin (mobile apps, curl, Postman, etc.)
   if (!origin) return true;
   try {
     const { hostname } = new URL(origin);
+
+    // Support optional custom domains configured via environment variables
+    const envOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    if (envOrigins.some((env) => env === origin || env === hostname)) {
+      return true;
+    }
+
     return (
       allowedOriginPattern.test(hostname) ||
+      hostname === 'villdesign.com' ||
+      hostname === 'survey.villdesign.com' ||
       hostname === 'localhost' ||
       hostname === '127.0.0.1' ||
       hostname === 'survey-application-japan.vercel.app' ||
-      origin === 'https://survey-application-japan.vercel.app'
+      origin === 'https://survey-application-japan.vercel.app' ||
+      origin === 'https://survey.villdesign.com'
     );
   } catch (err) {
     return false;
