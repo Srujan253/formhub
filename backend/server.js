@@ -15,24 +15,40 @@ dotenv.config();
 
 const app = express();
 
-// CORS — allow all .onrender.com origins + localhost for dev + vercel backup
-const allowedOriginPattern = /\.onrender\.com$/;
-app.use(cors({
+// CORS — allow all .onrender.com origins, .vercel.app origins, and localhost
+const allowedOriginPattern = /\.(onrender\.com|vercel\.app)$/;
+
+const isAllowedOrigin = (origin) => {
+  // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+  if (!origin) return true;
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      allowedOriginPattern.test(hostname) ||
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === 'survey-application-japan.vercel.app' ||
+      origin === 'https://survey-application-japan.vercel.app'
+    );
+  } catch (err) {
+    return false;
+  }
+};
+
+const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (
-      allowedOriginPattern.test(new URL(origin).hostname) ||
-      origin.startsWith('http://localhost') ||
-      origin === 'survey-application-japan.vercel.app'
-    ) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
-    callback(new Error('Not allowed by CORS'));
+    console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+    callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
